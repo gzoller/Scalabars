@@ -2,11 +2,13 @@ package co.blocke.scalabars
 
 import co.blocke.scalajack._
 
+case class Person(name: String, age: Int)
 case class Desc(heavy: String)
 case class Data(
-    name: String,
-    msg:  String,
-    A:    List[Desc]
+    name:   String,
+    msg:    String,
+    A:      List[Desc],
+    player: Person
 )
 
 object Runme extends App {
@@ -15,7 +17,7 @@ object Runme extends App {
 
   //  val input = "Hello, {{name}} here msg wow."
   val input =
-    """Hello, {{name}} here {{{msg}}} wow.
+    """Hello, {{player.name}} here {{{msg}}} wow.
       |{{^bogus}}
       |I'm alive!
       |{{/bogus}}
@@ -24,11 +26,21 @@ object Runme extends App {
       |{{/A}}
     """.stripMargin
 
-  val context = sj.render(Data("Greg", "we go", List(Desc("cool"), Desc("wicked")))).asInstanceOf[HB.Context]
+  val context = Context(sj.render(Data("Greg", "we go", List(Desc("cool"), Desc("wicked")), Person("Mike", 32))))
 
   val p = HandlebarsParser()
   val output = p.compile(input).map(_.render(context)).mkString("")
 
   println(output)
   println("-------")
+
+  val player = "player/age"
+
+  val playerC = context.find(player)
+  println(playerC.value)
+  val upC = playerC.find("../../msg")
+  println(upC.value)
+
+  println("---------")
+  println(context.find("A.[1].heavy").value)
 }

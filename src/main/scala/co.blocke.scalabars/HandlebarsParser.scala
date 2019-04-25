@@ -29,7 +29,7 @@ case class HandlebarsParser() {
   private def variable[_: P] = P(unescapedVariable | escapedVariable)
   private def escapedVariable[_: P] = P("{{" ~/ tag.! ~ "}}").map(v => Variable(v, true))
   private def unescapedVariable[_: P] = P("{{{" ~/ tag.! ~ "}}}").map(v => Variable(v, false))
-  private def tag[_: P]: P[String] = CharIn("""_,a-z,A-Z,0-9""").rep.!
+  private def tag[_: P]: P[String] = CharIn(""".,/,_,a-z,A-Z,0-9""").rep.!
 
   private def stringChars(c: Char) = c != '{'
   private def strChars[_: P] = P(CharsWhile(stringChars).!).map(Text(_))

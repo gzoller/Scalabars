@@ -83,6 +83,10 @@ case class Section(name: String, contained: List[Renderable]) extends Renderable
   }
 }
 
-case class Partial(name: String) extends Renderable {
-  def render(context: Context)(implicit sb: ScalaBars) = sb.getPartial(name).map(contained => renderChunk(context, contained) + "\n").getOrElse("")
+case class Partial(name: String, isDynamic: Boolean) extends Renderable {
+  def render(context: Context)(implicit sb: ScalaBars) =
+    if (isDynamic)
+      sb.run(name)
+    else
+      sb.getPartial(name).map(contained => renderChunk(context, contained) + "\n").getOrElse(s"x$name x")
 }

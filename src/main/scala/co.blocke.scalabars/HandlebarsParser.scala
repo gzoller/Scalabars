@@ -1,12 +1,14 @@
 package co.blocke.scalabars
 
 import fastparse._, SingleLineWhitespace._
+import javax.script.ScriptEngine
+import javax.script.ScriptEngineManager
 
 case class HandlebarsParser() {
 
   private def template[_: P] = P(renderable.repX)
 
-  private def renderable[_: P]: P[Renderable] = P(partial | section | inverted | strChars | !tryCloseBlock ~ variable)
+  private def renderable[_: P]: P[Renderable] = P(dynammicPartial | partial | section | inverted | strChars | !tryCloseBlock ~ variable)
 
   def section[_: P] = P(
     for {
@@ -28,7 +30,9 @@ case class HandlebarsParser() {
   private def closeBlock[_: P](closeLabel: String) = P("{{/" ~/ closeLabel ~ "}}\n")
   private def tryCloseBlock[_: P] = P("{{/")
 
-  private def partial[_: P] = P("{{>" ~/ tag.! ~ "}}\n").map(Partial(_))
+  private def partial[_: P] = P("{{>" ~/ tag.! ~ "}}").map(Partial(_, false))
+  private def dynammicPartial[_: P] = P("{{>" ~ "(" ~ tag.! ~ ")" ~ "}}").map(Partial(_, true))
+
   private def variable[_: P] = P(unescapedVariable | escapedVariable)
   private def escapedVariable[_: P] = P("{{" ~/ tag.! ~ "}}").map(v => Variable(v, true))
   private def unescapedVariable[_: P] = P("{{{" ~/ tag.! ~ "}}}").map(v => Variable(v, false))

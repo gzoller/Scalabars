@@ -1,7 +1,5 @@
 package co.blocke.scalabars
 
-//import co.blocke.scalajack._
-
 case class Person(name: String, age: Int)
 case class Desc(heavy: String)
 case class Data(
@@ -13,8 +11,6 @@ case class Data(
 
 object Runme extends App {
 
-  //  val sj = ScalaJack(json4s.Json4sFlavor())
-
   //  val input = "Hello, {{name}} here msg wow."
   val input =
     """Hello, {{player.name}} here {{{msg}}} wow.
@@ -23,17 +19,14 @@ object Runme extends App {
       |{{> inclusion }}
       |{{/bogus}}
       |{{#A}}
-      |   some stuff {{heavy}} here
+      |   some stuff {{heavy}} here {{> (foo) }}
       |{{/A}}
     """.stripMargin
 
-  val sb = ScalaBars(input).registerPartial("inclusion", "{{name}} was here!")
+  val sb = ScalaBars(input).registerPartial("inclusion", "{{name}} was here!").registerHelper("foo", """function() { return "FooBar!"; }""")
+
   val c = Data("Greg", "we go", List(Desc("cool"), Desc("wicked")), Person("Mike", 32))
   val output = sb.render(c)
-
-  //  val context = Context(sj.render(Data("Greg", "we go", List(Desc("cool"), Desc("wicked")), Person("Mike", 32))))
-  //  val p = HandlebarsParser()
-  //  val output = p.compile(input).map(_.render(context)).mkString("")
 
   println(output)
   println("-------")

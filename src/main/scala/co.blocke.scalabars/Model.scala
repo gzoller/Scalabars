@@ -1,17 +1,19 @@
 package co.blocke.scalabars
 
+import co.blocke.scalajack.{ ScalaJack, json4s }
 import org.apache.commons.text.StringEscapeUtils
 import org.json4s._
 
-object HB {
+object SB {
   type Scope = JValue
 
-  def renderChunk(context: Context, renderables: List[Renderable]) =
+  def renderChunk(context: Context, renderables: List[Renderable])(implicit sb: ScalaBars) =
     renderables.map(_.render(context)).mkString("")
 
+  val sj = ScalaJack(json4s.Json4sFlavor())
   val pathParser = PathParser()
 }
-import HB._
+import SB._
 
 object Context {
   def apply(value: Scope): Context = Context(value, List(value)) // history initially == scope at top-level
@@ -36,15 +38,19 @@ case class Context(value: Scope, history: List[Scope]) {
 }
 
 trait Renderable {
-  def render(context: Context): String
+  def render(context: Context)(implicit sb: ScalaBars): String
+}
+
+case class Comment() extends Renderable {
+  def render(context: Context)(implicit sb: ScalaBars): String = ""
 }
 
 case class Text(value: String) extends Renderable {
-  def render(context: Context) = value
+  def render(context: Context)(implicit sb: ScalaBars) = value
 }
 
 case class Variable(name: String, escaped: Boolean) extends Renderable {
-  def render(context: Context) =
+  def render(context: Context)(implicit sb: ScalaBars) =
     if (escaped)
       StringEscapeUtils.escapeHtml4(context.find(name).value.values.toString)
     else
@@ -52,7 +58,7 @@ case class Variable(name: String, escaped: Boolean) extends Renderable {
 }
 
 case class Inverted(name: String, contained: List[Renderable]) extends Renderable {
-  def render(context: Context) =
+  def render(context: Context)(implicit sb: ScalaBars) =
     context.find(name).value match {
       case JNothing                     => renderChunk(context, contained)
       case b: JBool if !b.value         => renderChunk(context, contained)
@@ -62,7 +68,7 @@ case class Inverted(name: String, contained: List[Renderable]) extends Renderabl
 }
 
 case class Section(name: String, contained: List[Renderable]) extends Renderable {
-  def render(context: Context) = {
+  def render(context: Context)(implicit sb: ScalaBars) = {
     val resolved = context.find(name)
     resolved.value match {
       case b: JBool if b.value => renderChunk(context, contained)
@@ -75,4 +81,8 @@ case class Section(name: String, contained: List[Renderable]) extends Renderable
       case _ => ""
     }
   }
+}
+
+case class Partial(name: String) extends Renderable {
+  def render(context: Context)(implicit sb: ScalaBars) = sb.getPartial(name).map(contained => renderChunk(context, contained) + "\n").getOrElse("")
 }

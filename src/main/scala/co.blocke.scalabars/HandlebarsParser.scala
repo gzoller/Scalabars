@@ -1,12 +1,12 @@
 package co.blocke.scalabars
 
-import fastparse._, NoWhitespace._
+import fastparse._, SingleLineWhitespace._
 
 case class HandlebarsParser() {
 
-  private def template[_: P] = P(renderable.rep)
+  private def template[_: P] = P(renderable.repX)
 
-  private def renderable[_: P]: P[Renderable] = P(section | inverted | strChars | !tryCloseBlock ~ variable)
+  private def renderable[_: P]: P[Renderable] = P(partial | section | inverted | strChars | !tryCloseBlock ~ variable)
 
   def section[_: P] = P(
     for {
@@ -21,11 +21,14 @@ case class HandlebarsParser() {
     } yield Inverted(label, block.toList)
   )
 
+  //  private def comment1[_: P] = P("{{!--" ~/ AnyChar.rep ~ "--}}").map(_ => Comment())
+  //  private def comment2[_: P] = P("{{!" ~/ AnyChar.repX ~ "}}").map(_ => Comment())
   private def openBlock[_: P] = P("{{#" ~/ tag.! ~ "}}\n")
   private def openNegBlock[_: P] = P("{{^" ~/ tag.! ~ "}}\n")
   private def closeBlock[_: P](closeLabel: String) = P("{{/" ~/ closeLabel ~ "}}\n")
   private def tryCloseBlock[_: P] = P("{{/")
 
+  private def partial[_: P] = P("{{>" ~/ tag.! ~ "}}\n").map(Partial(_))
   private def variable[_: P] = P(unescapedVariable | escapedVariable)
   private def escapedVariable[_: P] = P("{{" ~/ tag.! ~ "}}").map(v => Variable(v, true))
   private def unescapedVariable[_: P] = P("{{{" ~/ tag.! ~ "}}}").map(v => Variable(v, false))

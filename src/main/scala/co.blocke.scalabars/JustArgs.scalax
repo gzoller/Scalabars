@@ -1,0 +1,23 @@
+package co.blocke.scalabars
+
+import fastparse.Parsed
+
+object JustArgs extends App {
+
+  val a = ArgsParser()
+
+  val in =
+    """{{^Greg}}
+      |{{#a b c d e}}
+      |{{! foo }}
+      |text {{Fred}}{{{Wilma}}}here
+      |{{/a}}
+      |{{/Greg}}
+    """.stripMargin
+
+  a.parseArgs(in) match {
+    case Parsed.Success(value, _) =>
+      println(value)
+    case f @ Parsed.Failure(_, _, _) => println(f)
+  }
+}

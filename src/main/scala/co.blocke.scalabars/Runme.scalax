@@ -19,11 +19,18 @@ object Runme extends App {
       |{{> inclusion }}
       |{{/bogus}}
       |{{#A}}
+      |{{! junk and more }}
+      |{{#foo david}}
+      |smitten
+      |{{/foo}}
       |   some stuff {{heavy}} here {{> (foo) }}
       |{{/A}}
     """.stripMargin
+  //    {{#each blather}}
+  //  hello
+  //  {{/each}}
 
-  val sb = ScalaBars(input).registerPartial("inclusion", "{{name}} was here!").registerHelper("foo", """function() { return "FooBar!"; }""")
+  val sb = ScalaBars(input).registerPartial("inclusion", "{{name}} was here!").registerHelper("foo", """function() { return "FooBar "+this.heavy+"!"; }""")
 
   val c = Data("Greg", "we go", List(Desc("cool"), Desc("wicked")), Person("Mike", 32))
   val output = sb.render(c)

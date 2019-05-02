@@ -7,11 +7,15 @@ import org.json4s._
 object SB {
   type Scope = JValue
 
+  implicit class OpsNum(val str: String) extends AnyVal {
+    def isNumeric() = scala.util.Try(str.toDouble).isSuccess
+  }
+
   def renderChunk(context: Context, renderables: List[Renderable])(implicit sb: ScalaBars) =
     renderables.map(_.render(context)).mkString("")
 
   val sj = ScalaJack(json4s.Json4sFlavor())
-  val pathParser = PathParser()
+  //  val pathParser = PathParser()
 }
 import SB._
 
@@ -19,8 +23,10 @@ object Context {
   def apply(value: Scope): Context = Context(value, List(value)) // history initially == scope at top-level
 }
 case class Context(value: Scope, history: List[Scope]) {
-  def find(path: String): Context = {
-    val newHistory = pathParser.unpackPath(path).foldLeft(history) {
+  //  def find(path: String): Context = find(pathParser.unpackPath(path))
+
+  def find(path: List[String]): Context = {
+    val newHistory = path.foldLeft(history) {
       case (h, element) => element match {
         case ".." => h.tail
         case n if n.startsWith("[") => h.head match {
@@ -49,6 +55,7 @@ case class Text(value: String) extends Renderable {
   def render(context: Context)(implicit sb: ScalaBars) = value
 }
 
+/*
 case class Variable(name: String, escaped: Boolean) extends Renderable {
   def render(context: Context)(implicit sb: ScalaBars) =
     if (escaped)
@@ -67,18 +74,25 @@ case class Inverted(name: String, contained: List[Renderable]) extends Renderabl
     }
 }
 
-case class Section(name: String, contained: List[Renderable]) extends Renderable {
+case class HelperOrSection(name: String, args: List[String], contained: List[Renderable]) extends Renderable {
   def render(context: Context)(implicit sb: ScalaBars) = {
-    val resolved = context.find(name)
-    resolved.value match {
-      case b: JBool if b.value => renderChunk(context, contained)
-      case c: JObject          => renderChunk(resolved, contained)
-      case t: JArray => t.arr.foldLeft("") {
-        case (str, jv) =>
-          val ctx = Context(jv, jv +: resolved.history)
-          str + renderChunk(ctx, contained)
+    // Determine if Section or Helper
+    sb.helpers.get(name).map { h =>
+      // Is Helper...
+      "helper"
+    }.getOrElse {
+      // Is Section...
+      val resolved = context.find(name)
+      resolved.value match {
+        case b: JBool if b.value => renderChunk(context, contained)
+        case c: JObject          => renderChunk(resolved, contained)
+        case t: JArray => t.arr.foldLeft("") {
+          case (str, jv) =>
+            val ctx = Context(jv, jv +: resolved.history)
+            str + renderChunk(ctx, contained)
+        }
+        case _ => ""
       }
-      case _ => ""
     }
   }
 }
@@ -86,7 +100,15 @@ case class Section(name: String, contained: List[Renderable]) extends Renderable
 case class Partial(name: String, isDynamic: Boolean) extends Renderable {
   def render(context: Context)(implicit sb: ScalaBars) =
     if (isDynamic)
-      sb.run(name)
+      renderChunk(context, sb.parseMe(sb.run(name, context, None)))
     else
       sb.getPartial(name).map(contained => renderChunk(context, contained) + "\n").getOrElse(s"x$name x")
+}
+ */
+
+case class HelperOrSection(name: String, args: List[String], contained: List[Renderable]) extends Renderable {
+  def render(context: Context)(implicit sb: ScalaBars) = "Nada"
+}
+case class Inverted(name: String, contained: List[Renderable]) extends Renderable {
+  def render(context: Context)(implicit sb: ScalaBars) = "Nada"
 }

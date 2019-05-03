@@ -4,24 +4,29 @@ import reflect.runtime.universe.TypeTag
 import javax.script.ScriptEngineManager
 import org.json4s.native.JsonMethods
 
-case class Template(t: List[Renderable])(implicit sb: ScalaBars) {
+case class Template(t: List[Renderable])(implicit sb: Scalabars) {
   def render[T](context: T)(implicit tt: TypeTag[T]): String = render(SB.sj.render(context))
   def render(context: SB.Scope): String = t.map(_.render(Context(context))).mkString("")
 }
 
-case class ScalaBars(
+case class Scalabars(
     partials: Map[String, String] = Map.empty[String, String],
     helpers:  Map[String, String] = Map.empty[String, String]) {
 
   private val parser = Bars2() // HandlebarsParser()
-  private val javascript = new ScriptEngineManager().getEngineByName("nashorn")
+  private lazy val javascript = new ScriptEngineManager().getEngineByName("nashorn")
   private var compiledPartials = Map.empty[String, List[Renderable]]
   private var helpersEvaled = false
 
-  def registerPartial(name: String, template: String): ScalaBars = this.copy(partials = this.partials + (name -> template))
-  def registerHelper(name: String, code: String): ScalaBars = this.copy(helpers = this.helpers + (name -> code))
+  def registerPartial(name: String, template: String): Scalabars = this.copy(partials = this.partials + (name -> template))
+  def registerHelper(name: String, code: String): Scalabars = this.copy(helpers = this.helpers + (name -> code))
+  def unregisterPartial(name: String): Scalabars = this.copy(partials = this.partials - name)
+  def unregisterHelper(name: String): Scalabars = this.copy(helpers = this.helpers - name)
+
+  lazy val functions = BarsFunctions(javascript)
 
   private def compilePartialsAndHelpers() = {
+    functions // force lazy evaluation
     if (compiledPartials.isEmpty && partials.nonEmpty)
       compiledPartials = partials.map { case (k, v) => (k, parser.compile(v)) }
     if (!helpersEvaled && helpers.nonEmpty) {
@@ -37,17 +42,7 @@ case class ScalaBars(
 
   private[scalabars] def getPartial(name: String): Option[List[Renderable]] = compiledPartials.get(name)
 
-  private[scalabars] def run(
-      fnName:  String,
-      context: Context,
-      body:    Option[List[Renderable]],
-      args:    String*): String = {
-    val contextVars = JsonMethods.compact(JsonMethods.render(context.value))
-    val argsStr = if (args.size == 0) "" else s", ${args.mkString(",")}"
-    javascript.eval(
-      s"""$fnName.call($contextVars$argsStr)"""
-    ).toString
-  }
+  private[scalabars] def eval(p: String) = javascript.eval(p)
 
   private[scalabars] def run2(
       expr:    FullExpr,
@@ -65,7 +60,7 @@ case class ScalaBars(
     println("Hash Str: " + hashStr + argStr)
     println("    Script--> " + s"""${expr.label}.call($hashStr$argStr)""")
     javascript.eval(
-      s"""${expr.label}.call($hashStr$argStr)"""
+      s"""this.safestring=false; ${expr.label}.call($hashStr$argStr);"""
     ).toString
   }
 
@@ -91,36 +86,5 @@ case class ScalaBars(
 var a = {"name":"Greg","OK":true};
 var b = {"foo":[1,2,3]};
 var c = Object.assign({}, a, b);
-
-
-import javax.script.*;
-
-public class ExecuteScript {
-
-    public static void main(String[] args) throws Exception {
-        // create a Java object
-        ExecuteScript es = new ExecuteScript();
-
-        // create a script engine manager
-        ScriptEngineManager factory = new ScriptEngineManager();
-        // create a JavaScript engine
-        ScriptEngine engine = factory.getEngineByName("JavaScript");
-        // evaluate JavaScript code from String
-        engine.eval("println('Welcome to Java world')");
-
-        // add the Java object into the engine.
-        engine.put("es",es);
-
-        ScriptEngineFactory sef = engine.getFactory();
-        String s = sef.getMethodCallSyntax("es", "sayHi", new String[0]);
-        // show the correct way to call the Java method
-        System.out.println(s);
-        engine.eval(s);
-    }
-
-    public static void sayHi(){
-        System.out.println("hihi");
-    }
-}
 
  */ 

@@ -13,12 +13,13 @@ case class Data(
 
 class Interpreting extends FunSpec with Matchers {
 
-  val sb = ScalaBars()
+  val sb = Scalabars()
     .registerHelper("foo", """function(tag) { return "FooBar "+tag+"!"; }""") // parameter
     .registerHelper("bar", """function() { return "Simple"; }""") // no param
     .registerHelper("hash", """function() { return "Hashed "+this.msg; }""") // parameter
     .registerHelper("hashObj", """function() { return "Hashed "+this.msg.heavy; }""") // object hash param
     .registerHelper("allTypes", """function() { return this.bool+" "+this.num+" "+this.nope+ " "+this.nada+ " "+this.s; }""") // object hash param
+    .registerHelper("raw", """function() { return "<b>Hey</b>"; }""")
   val c = Data("Greg", "<p>Yay!</p>", List(Desc("cool"), Desc("wicked")), Person("Mike", 32))
 
   describe("-----------------------------\n:  Handlebars Interpreting  :\n-----------------------------") {
@@ -63,6 +64,12 @@ class Interpreting extends FunSpec with Matchers {
       }
       it("Interprets all data types of hash params") {
         sb.compile("Hello, {{allTypes bool=true num= 12.34 nope = null nada=undefined s=\"Greg\"}}!").render(c) should equal("Hello, true 12.34 null undefined Greg!")
+      }
+      it("Interprets an escaped helper return value") {
+        sb.compile("Hello, {{raw}}!").render(c) should equal("Hello, &lt;b&gt;Hey&lt;/b&gt;!")
+      }
+      it("Interprets an unescaped helper return value") {
+        sb.compile("Hello, {{{raw}}}!").render(c) should equal("Hello, <b>Hey</b>!")
       }
     }
   }

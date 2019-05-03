@@ -2,6 +2,7 @@ package co.blocke.scalabars
 
 object Test extends App {
 
+  /*
   val t =
     """
       |{{foo}}
@@ -13,8 +14,11 @@ object Test extends App {
       |{{foo "this is a test" blah name="Greg Zoller"}}
       |      |      """.stripMargin
 
-  val sb = ScalaBars(t)
-  println(sb.parsed)
+   */
+  val t = "Test {{{foo}}}"
+
+  val sb = Scalabars().registerHelper("foo", """function(){ return Handlebars.escapeExpression("<b>hey</b>"); }""")
+  println(sb.compile(t).render("nada"))
 
   /*
   val c = Data("Greg", "<p>Yay!</p>", List(Desc("cool"), Desc("wicked")), Person("Mike", 32))

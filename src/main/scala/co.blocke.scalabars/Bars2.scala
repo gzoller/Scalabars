@@ -25,7 +25,7 @@ case class Bars2() {
   private def arg[_: P]: P[Argument] = P(assignmentArg | stringArg | pathArg)
   private def stringArg[_: P] = P("\"" ~ CharsWhile(_ != '"').! ~ "\"" | "'" ~ CharsWhile(_ != '\'').! ~ "'").map(r => StringArgument(r))
   private def pathArg[_: P] = P(path).map(p => PathArgument(p))
-  private def literalArg[_: P] = P("true" | "false" | "null" | "undefined" | "-".? ~ CharsWhile(_.isDigit) ~ ("." ~ CharsWhile(_.isDigit)).?).!.map(r => StringArgument(r))
+  private def literalArg[_: P] = P("true" | "false" | "null" | "undefined" | "-".? ~~ CharsWhile(_.isDigit) ~~ ("." ~~ CharsWhile(_.isDigit)).?).!.map(r => StringArgument(r))
   private def assignmentArg[_: P] = P(label ~ "=" ~ P(literalArg | pathArg | stringArg)).map(r => AssignmentArgument(r._1, r._2))
 
   private def strChars[_: P] = P(CharsWhile(_ != '{').!).map(Text(_))

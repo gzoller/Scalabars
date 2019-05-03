@@ -11,7 +11,7 @@ object SB {
     def isNumeric() = scala.util.Try(str.toDouble).isSuccess
   }
 
-  def renderChunk(context: Context, renderables: List[Renderable])(implicit sb: ScalaBars) =
+  def renderChunk(context: Context, renderables: List[Renderable])(implicit sb: Scalabars) =
     renderables.map(_.render(context)).mkString("")
 
   val sj = ScalaJack(json4s.Json4sFlavor())
@@ -44,15 +44,15 @@ case class Context(value: Scope, history: List[Scope]) {
 }
 
 trait Renderable {
-  def render(context: Context)(implicit sb: ScalaBars): String
+  def render(context: Context)(implicit sb: Scalabars): String
 }
 
 case class Comment() extends Renderable {
-  def render(context: Context)(implicit sb: ScalaBars): String = ""
+  def render(context: Context)(implicit sb: Scalabars): String = ""
 }
 
 case class Text(value: String) extends Renderable {
-  def render(context: Context)(implicit sb: ScalaBars) = value
+  def render(context: Context)(implicit sb: Scalabars) = value
 }
 
 /*
@@ -107,8 +107,8 @@ case class Partial(name: String, isDynamic: Boolean) extends Renderable {
  */
 
 case class HelperOrSection(name: String, args: List[String], contained: List[Renderable]) extends Renderable {
-  def render(context: Context)(implicit sb: ScalaBars) = "Nada"
+  def render(context: Context)(implicit sb: Scalabars) = "Nada"
 }
 case class Inverted(name: String, contained: List[Renderable]) extends Renderable {
-  def render(context: Context)(implicit sb: ScalaBars) = "Nada"
+  def render(context: Context)(implicit sb: Scalabars) = "Nada"
 }

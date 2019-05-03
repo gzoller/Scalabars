@@ -4,7 +4,7 @@ import org.scalatest.{ FunSpec, Matchers }
 
 class Parsing() extends FunSpec with Matchers {
 
-  val sb = ScalaBars().registerHelper("foo", """function() { return "FooBar "+this.name+"!"; }""")
+  val sb = Scalabars().registerHelper("foo", """function() { return "FooBar "+this.name+"!"; }""")
 
   describe("------------------------\n:  Handlebars Parsing  :\n------------------------") {
     describe("Thing parsing") {

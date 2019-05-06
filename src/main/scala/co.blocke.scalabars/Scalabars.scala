@@ -85,11 +85,3 @@ case class Scalabars(
     case _                                       => "\"" + v + "\""
   }
 }
-
-/*
-
-var a = {"name":"Greg","OK":true};
-var b = {"foo":[1,2,3]};
-var c = Object.assign({}, a, b);
-
- */ 

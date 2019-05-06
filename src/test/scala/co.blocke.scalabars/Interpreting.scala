@@ -26,6 +26,27 @@ class Interpreting extends FunSpec with Matchers {
     .registerHelper("context", """function() { return this.player.name; }""")
     .registerHelper("noop", """function(options) { return options.fn(this); }""")
     .registerHelper("oneop", """function(options) { return this.small + "_"+options.fn(this)+"_"; }""")
+    .registerHelper("strArg", """function(msg,options) { return msg + " _"+options.fn(this)+"_"; }""")
+    .registerHelper("jsEach", """
+        |function(context, options) {
+        |  var ret = "";
+        |
+        |  for(var i=0, j=context.length; i<j; i++) {
+        |    ret = ret + options.fn(context[i]);
+        |  }
+        |
+        |  return ret;
+        |}""".stripMargin)
+    .registerHelper(
+      "jsIf",
+      """
+        |function(conditional, options) {
+        |  if(conditional) {
+        |    return options.fn(this);
+        |  } else {
+        |    return options.inverse(this);
+        |  }
+        |}""".stripMargin)
   val c = Data("Greg", "<p>Yay!</p>", 15, false, 2L, List(Desc("cool"), Desc("wicked")), Person("Mike", 32))
 
   describe("-----------------------------\n:  Handlebars Interpreting  :\n-----------------------------") {
@@ -89,8 +110,18 @@ class Interpreting extends FunSpec with Matchers {
       it("Basic block") {
         sb.compile("Hello, {{#noop}}Foo{{/noop}}!").render(c) should be("Hello, Foo!")
       }
-      it("Basic block with variable") {
+      it("Basic block with context variable") {
         sb.compile("Hello, {{#oneop}}Foo{{/oneop}}!").render(c) should be("Hello, 2_Foo_!")
+      }
+      it("Basic block with parameter variable") {
+        sb.compile("""Hello, {{#strArg "boom"}}Foo{{/strArg}}!""").render(c) should be("Hello, boom _Foo_!")
+      }
+      it("Iteration block (each example)") {
+        sb.compile("""Hello, {{#jsEach A}}Is this {{heavy}}?{{/jsEach}}!""").render(c) should be("Hello, Is this cool?Is this wicked?!")
+      }
+      it("else block (if example)") {
+        sb.compile("""Hello, {{#jsIf A}}here{{else}}missing{{/jsIf}}!""").render(c) should be("Hello, here!")
+        sb.compile("""Hello, {{#jsIf bogus}}here{{else}}missing{{/jsIf}}!""").render(c) should be("Hello, missing!")
       }
     }
   }

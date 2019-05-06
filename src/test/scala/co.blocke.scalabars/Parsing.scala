@@ -9,39 +9,42 @@ class Parsing() extends FunSpec with Matchers {
   describe("------------------------\n:  Handlebars Parsing  :\n------------------------") {
     describe("Thing parsing") {
       it("Parses 1-element path") {
-        sb.compile("Hello, {{name}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr(List("name")), true), Text("!")))
+        sb.compile("Hello, {{name}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr("name", List("name")), true), Text("!")))
       }
       it("Parses 'up level' path") {
-        sb.compile("Hello, {{../name}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr(List("..", "name")), true), Text("!")))
+        sb.compile("Hello, {{../name}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr("name", List("..", "name")), true), Text("!")))
       }
       it("Parses dot separated path") {
-        sb.compile("Hello, {{emp.author.name}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr(List("emp", "author", "name")), true), Text("!")))
+        sb.compile("Hello, {{emp.author.name}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr("name", List("emp", "author", "name")), true), Text("!")))
       }
       it("Parses slash separated path") {
-        sb.compile("Hello, {{emp/author/name}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr(List("emp", "author", "name")), true), Text("!")))
+        sb.compile("Hello, {{emp/author/name}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr("name", List("emp", "author", "name")), true), Text("!")))
       }
       it("Parses array path") {
-        sb.compile("Hello, {{emp.author.[1].name}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr(List("emp", "author", "[1", "name")), true), Text("!")))
+        sb.compile("Hello, {{emp.author.[1].name}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr("name", List("emp", "author", "[1", "name")), true), Text("!")))
       }
       it("Parses 1-element path (unescaped)") {
-        sb.compile("Hello, {{{name}}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr(List("name")), false), Text("!")))
+        sb.compile("Hello, {{{name}}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr("name", List("name")), false), Text("!")))
       }
       it("Parses 'up level' path (unescaped)") {
-        sb.compile("Hello, {{{../name}}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr(List("..", "name")), false), Text("!")))
+        sb.compile("Hello, {{{../name}}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr("name", List("..", "name")), false), Text("!")))
       }
       it("Parses dot separated path (unescaped)") {
-        sb.compile("Hello, {{{emp.author.name}}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr(List("emp", "author", "name")), false), Text("!")))
+        sb.compile("Hello, {{{emp.author.name}}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr("name", List("emp", "author", "name")), false), Text("!")))
       }
       it("Parses slash separated path (unescaped)") {
-        sb.compile("Hello, {{{emp/author/name}}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr(List("emp", "author", "name")), false), Text("!")))
+        sb.compile("Hello, {{{emp/author/name}}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr("name", List("emp", "author", "name")), false), Text("!")))
       }
       it("Parses array path (unescaped)") {
-        sb.compile("Hello, {{{emp.author.[1].name}}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr(List("emp", "author", "[1", "name")), false), Text("!")))
+        sb.compile("Hello, {{{emp.author.[1].name}}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr("name", List("emp", "author", "[1", "name")), false), Text("!")))
+      }
+      it("Parses current level") {
+        sb.compile("Hello, {{./name}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr("name", List(".", "name")), true), Text("!")))
       }
     }
     describe("Helper Parsing") {
       it("Parses no-arg helper") {
-        sb.compile("Hello, {{foo}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr(List("foo")), true), Text("!")))
+        sb.compile("Hello, {{foo}}!").t should equal(List(Text("Hello, "), Thing(SimpleExpr("foo", List("foo")), true), Text("!")))
       }
       it("Parses simple-arg helpers") {
         sb.compile("Hello, {{foo bar blather}}!").t should equal(List(Text("Hello, "), Thing(FullExpr("foo", List(PathArgument(List("bar")), PathArgument(List("blather")))), true), Text("!")))
@@ -54,6 +57,11 @@ class Parsing() extends FunSpec with Matchers {
       }
       it("Parses helper with hash path assignments") {
         sb.compile("Hello, {{foo bar name=../author.name}}!").t should equal(List(Text("Hello, "), Thing(FullExpr("foo", List(PathArgument(List("bar")), AssignmentArgument("name", PathArgument(List("..", "author", "name"))))), true), Text("!")))
+      }
+    }
+    describe("Block Parsing") {
+      it("Parses 1-element path") {
+        sb.compile("Hello, {{#name}}Foo{{/name}}!").t should equal(List(Text("Hello, "), Block(SimpleExpr("name", List("name")), List(Text("Foo"))), Text("!")))
       }
     }
   }

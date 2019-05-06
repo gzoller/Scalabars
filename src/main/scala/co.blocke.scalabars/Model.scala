@@ -1,7 +1,6 @@
 package co.blocke.scalabars
 
 import co.blocke.scalajack.{ ScalaJack, json4s }
-import org.apache.commons.text.StringEscapeUtils
 import org.json4s._
 
 object SB {
@@ -11,13 +10,25 @@ object SB {
     def isNumeric() = scala.util.Try(str.toDouble).isSuccess
   }
 
-  def renderChunk(context: Context, renderables: List[Renderable])(implicit sb: Scalabars) =
-    renderables.map(_.render(context)).mkString("")
+  def renderChunk(context: Context, options: Map[String, Any], renderables: List[Renderable])(implicit sb: Scalabars) =
+    renderables.map(_.render(context, options)).mkString("")
+
+  def swallowNothing(v: JValue) =
+    v match {
+      case JNothing => JString("")
+      case _        => v
+    }
 
   val sj = ScalaJack(json4s.Json4sFlavor())
-  //  val pathParser = PathParser()
 }
 import SB._
+
+object Options extends Enumeration {
+  type Options = Value
+
+  val data, compat, knownHelpers, knownHelpersOnly, noEscape, strict, assumeObjects, preventIntent, ignoreStandalone, explicitPartialContext = Value
+}
+import Options._
 
 object Context {
   def apply(value: Scope): Context = Context(value, List(value)) // history initially == scope at top-level
@@ -25,7 +36,7 @@ object Context {
 case class Context(value: Scope, history: List[Scope]) {
   //  def find(path: String): Context = find(pathParser.unpackPath(path))
 
-  def find(path: List[String]): Context = {
+  def find(path: List[String], options: Map[String, Any]): Context = {
     val newHistory = path.foldLeft(history) {
       case (h, element) => element match {
         case ".." => h.tail
@@ -39,20 +50,28 @@ case class Context(value: Scope, history: List[Scope]) {
         }
       }
     }
+    //    newHistory.head match {
+    //      case JNothing if options.get(strict.toString).asInstanceOf[Option[Boolean]].getOrElse(false) =>
+    //        throw new Exception(s"strict failed (missing field ${path.mkString(".")})")
+    //      case JNothing =>
+    //        Context(JString(""), )
+    //    }
+    if (options.get(strict.toString).asInstanceOf[Option[Boolean]].getOrElse(false) && newHistory.head == JNothing)
+      throw new Exception(s"strict failed (missing field ${path.mkString(".")})")
     Context(newHistory.head, newHistory)
   }
 }
 
 trait Renderable {
-  def render(context: Context)(implicit sb: Scalabars): String
+  def render(context: Context, options: Map[String, Any])(implicit sb: Scalabars): String
 }
 
 case class Comment() extends Renderable {
-  def render(context: Context)(implicit sb: Scalabars): String = ""
+  def render(context: Context, options: Map[String, Any])(implicit sb: Scalabars): String = ""
 }
 
 case class Text(value: String) extends Renderable {
-  def render(context: Context)(implicit sb: Scalabars) = value
+  def render(context: Context, options: Map[String, Any])(implicit sb: Scalabars) = value
 }
 
 /*
@@ -107,8 +126,8 @@ case class Partial(name: String, isDynamic: Boolean) extends Renderable {
  */
 
 case class HelperOrSection(name: String, args: List[String], contained: List[Renderable]) extends Renderable {
-  def render(context: Context)(implicit sb: Scalabars) = "Nada"
+  def render(context: Context, options: Map[String, Any])(implicit sb: Scalabars) = "Nada"
 }
 case class Inverted(name: String, contained: List[Renderable]) extends Renderable {
-  def render(context: Context)(implicit sb: Scalabars) = "Nada"
+  def render(context: Context, options: Map[String, Any])(implicit sb: Scalabars) = "Nada"
 }

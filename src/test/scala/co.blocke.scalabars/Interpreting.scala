@@ -7,6 +7,9 @@ case class Desc(heavy: String)
 case class Data(
     name:   String,
     msg:    String,
+    aNum:   Int,
+    isOK:   Boolean,
+    small:  Long,
     A:      List[Desc],
     player: Person
 )
@@ -20,7 +23,10 @@ class Interpreting extends FunSpec with Matchers {
     .registerHelper("hashObj", """function() { return "Hashed "+this.msg.heavy; }""") // object hash param
     .registerHelper("allTypes", """function() { return this.bool+" "+this.num+" "+this.nope+ " "+this.nada+ " "+this.s; }""") // object hash param
     .registerHelper("raw", """function() { return "<b>Hey</b>"; }""")
-  val c = Data("Greg", "<p>Yay!</p>", List(Desc("cool"), Desc("wicked")), Person("Mike", 32))
+    .registerHelper("context", """function() { return this.player.name; }""")
+    .registerHelper("noop", """function(options) { return options.fn(this); }""")
+    .registerHelper("oneop", """function(options) { return this.small + "_"+options.fn(this)+"_"; }""")
+  val c = Data("Greg", "<p>Yay!</p>", 15, false, 2L, List(Desc("cool"), Desc("wicked")), Person("Mike", 32))
 
   describe("-----------------------------\n:  Handlebars Interpreting  :\n-----------------------------") {
     describe("Thing interpreting") {
@@ -70,6 +76,21 @@ class Interpreting extends FunSpec with Matchers {
       }
       it("Interprets an unescaped helper return value") {
         sb.compile("Hello, {{{raw}}}!").render(c) should equal("Hello, <b>Hey</b>!")
+      }
+      it("Interprets from current context") {
+        sb.compile("Hello, {{context}}!").render(c) should equal("Hello, Mike!")
+      }
+    }
+    describe("Block Interpreting") {
+      it("Simple expr works") {
+        sb.compile("Hello, {{#name}}Foo{{/name}}!").render(c) should equal("Hello, Foo!") // exists
+        sb.compile("Hello, {{#bogus}}Foo{{/bogus}}!").render(c) should equal("Hello, !") // doesn't exist
+      }
+      it("Basic block") {
+        sb.compile("Hello, {{#noop}}Foo{{/noop}}!").render(c) should be("Hello, Foo!")
+      }
+      it("Basic block with variable") {
+        sb.compile("Hello, {{#oneop}}Foo{{/oneop}}!").render(c) should be("Hello, 2_Foo_!")
       }
     }
   }

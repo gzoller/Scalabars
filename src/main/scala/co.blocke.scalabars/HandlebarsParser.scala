@@ -2,7 +2,7 @@ package co.blocke.scalabars
 
 import fastparse._, ScalaWhitespace._
 
-case class Bars2() {
+case class HandlebarsParser() {
 
   private def template[_: P] = P(renderable.repX)
   private def renderable[_: P]: P[Renderable] = P(strChars | comment | block | inverted | !("{{/") ~ thing)
@@ -12,15 +12,16 @@ case class Bars2() {
   private def escapedThing[_: P] = P("{{" ~/ expr ~ "}}").map(Thing(_, true))
   private def unescapedThing[_: P] = P("{{{" ~/ expr ~ "}}}").map(Thing(_, false))
 
+  //  TODO: THESE SHOULD BE SIMPLEEXPR HERE
   private def openNegBlock[_: P] = P("{{^" ~/ label.! ~ "}}\n")
-  private def openBlock[_: P] = P("{{#" ~/ label.rep ~ "}}").map(_.toList)
-  private def closeBlock[_: P](closeLabel: String) = P("{{/" ~/ closeLabel ~ "}}\n")
+  private def openBlock[_: P] = P("{{#" ~/ expr ~ "}}")
+  private def closeBlock[_: P](closeLabel: String) = P("{{/" ~/ closeLabel ~ "}}")
 
   //  private def partial[_: P] = P("{{>" ~/ label.! ~ "}}").map(Partial(_, false))
   //  private def dynammicPartial[_: P] = P("{{>" ~ "(" ~ label.! ~ ")" ~ "}}").map(Partial(_, true))
 
   private def expr[_: P] = fullExpr | simpleExpr
-  private def simpleExpr[_: P] = P(path).map(r => SimpleExpr(r))
+  private def simpleExpr[_: P] = P(path).map(r => SimpleExpr(r.last, r))
   private def fullExpr[_: P] = P(label ~ arg.rep(1)).map(r => FullExpr(r._1, r._2.toList))
   private def arg[_: P]: P[Argument] = P(assignmentArg | stringArg | pathArg)
   private def stringArg[_: P] = P("\"" ~ CharsWhile(_ != '"').! ~ "\"" | "'" ~ CharsWhile(_ != '\'').! ~ "'").map(r => StringArgument(r))
@@ -33,9 +34,9 @@ case class Bars2() {
 
   private def block[_: P] = P(
     for {
-      args <- openBlock
-      block <- renderable.repX ~ closeBlock(args.head)
-    } yield HelperOrSection(args.head, args.tail, block.toList)
+      expr <- openBlock
+      contents <- renderable.repX ~ closeBlock(expr.label)
+    } yield Block(expr, contents.toList)
   )
 
   //_ - every 10 yrs _ conducts an enumeration of the population
@@ -47,7 +48,7 @@ case class Bars2() {
   )
 
   private def path[_: P] = P(element ~~ (separator ~~ element).repX).map(c => List(c._1) ++ c._2)
-  private def element[_: P] = P(label | upDir | index)
+  private def element[_: P] = P(label | upDir | index | ".".! ~ &("/"))
   private def index[_: P] = P(("[" ~/ CharsWhile(_.isDigit).repX(1)).! ~ "]")
   private def separator[_: P] = P("/" | ".")
   private def upDir[_: P] = P("..".!)
@@ -64,3 +65,28 @@ case class Bars2() {
     }
   }
 }
+
+/*
+  "slurp until" in {
+    def slurpUntil[_: P](delimiter: String) = P( ((AnyChar ~ !delimiter).rep ~ AnyChar).! ~ delimiter )
+    parse(input = "RCD*hello~RCD2*world~", slurpUntil("~")(_)) should matchPattern {
+      case Parsed.Success("RCD*hello", 10) =>
+    }
+  }
+
+    "higher order slurp" in {
+    def slurpUntil[_: P, T](delimiter: => P[T]) : P[_] =
+      P(
+        (((AnyChar ~ !delimiter).rep ~ AnyChar).! ~ delimiter)
+      .map( { case (fields, _) => fields }) )
+
+    def delimiter[_: P] = P ( "~" )
+    def slurper[_: P] = slurpUntil(delimiter)
+
+    val in = "RCD*hello~"
+    val inLen = in.length
+    parse(in, slurper(_)) should matchPattern {
+      case Parsed.Success("RCD*hello", `inLen`) =>
+    }
+  }
+ */ 

@@ -16,6 +16,7 @@ val json4sNative = "org.json4s"         %% "json4s-native" % "3.6.5"
 val scalajack    = "co.blocke"          %% "scalajack"     % "6.0.1"
 
 val basicSettings = Seq(
+  javacOptions ++= Seq("-Xlint:-removal"),
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignArguments, true)
     .setPreference(AlignParameters, true)

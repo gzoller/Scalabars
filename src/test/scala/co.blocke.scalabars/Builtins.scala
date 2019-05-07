@@ -22,6 +22,10 @@ class Builtins() extends FunSpec with Matchers {
       sb.compile("""Hello, {{#if A}}here{{else}}missing{{/if}}!""").render(c) should be("Hello, here!")
       sb.compile("""Hello, {{#if bogus}}here{{else}}missing{{/if}}!""").render(c) should be("Hello, missing!")
     }
+    it("if compound else") {
+      sb.compile("""Hello, {{#if bogus}}here{{else if A}}foo{{else}}missing{{/if}}!""").render(c) should be("Hello, foo!")
+      sb.compile("""Hello, {{#if bogus}}here{{else if X}}foo{{else}}missing{{/if}}!""").render(c) should be("Hello, missing!")
+    }
     it("eq") {
       sb.compile("""Hello, {{#eq aNum 15}}here{{else}}missing{{/eq}}!""").render(c) should be("Hello, here!")
       sb.compile("""Hello, {{#eq name "Greg"}}here{{else}}missing{{/eq}}!""").render(c) should be("Hello, here!")

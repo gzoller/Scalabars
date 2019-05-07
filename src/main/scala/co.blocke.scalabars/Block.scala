@@ -26,7 +26,7 @@ case class Block(expr: Expr, contents: List[Renderable]) extends Renderable {
       case f: FullExpr if f.label == "each" =>
         val arr = context.find(f.args.head.asInstanceOf[PathArgument].path, options).value.asInstanceOf[JArray].arr
         if (arr.isEmpty)
-          renderChunk(context, options, inverseBlock)
+          evalElse(context, options, inverseBlock)
         else
           arr.map(a =>
             renderChunk(Context(a, a +: context.history.tail), options, fnBlock)
@@ -34,26 +34,26 @@ case class Block(expr: Expr, contents: List[Renderable]) extends Renderable {
       case f: FullExpr if f.label == "with" =>
         val pre = context.find(f.args.head.asInstanceOf[PathArgument].path, options).value
         if (pre == JNothing || (pre.isInstanceOf[JObject] && pre.asInstanceOf[JObject].children.size == 0))
-          renderChunk(context, options, inverseBlock)
+          evalElse(context, options, inverseBlock)
         else {
           val a = pre.asInstanceOf[JObject]
           renderChunk(Context(a, a +: context.history.tail), options, contents)
         }
       case f: FullExpr if f.label == "if" =>
         context.find(f.args.head.asInstanceOf[PathArgument].path, options).value match {
-          case JNothing            => renderChunk(context, options, inverseBlock)
-          case JNull               => renderChunk(context, options, inverseBlock)
+          case JNothing            => evalElse(context, options, inverseBlock)
+          case JNull               => evalElse(context, options, inverseBlock)
           case b: JBool if b.value => renderChunk(context, options, fnBlock)
-          case _: JBool            => renderChunk(context, options, inverseBlock)
+          case _: JBool            => evalElse(context, options, inverseBlock)
           case _                   => renderChunk(context, options, fnBlock)
         }
       case f: FullExpr if f.label == "unless" =>
         context.find(f.args.head.asInstanceOf[PathArgument].path, options).value match {
           case JNothing            => renderChunk(context, options, fnBlock)
           case JNull               => renderChunk(context, options, fnBlock)
-          case b: JBool if b.value => renderChunk(context, options, inverseBlock)
+          case b: JBool if b.value => evalElse(context, options, inverseBlock)
           case _: JBool            => renderChunk(context, options, fnBlock)
-          case _                   => renderChunk(context, options, inverseBlock)
+          case _                   => evalElse(context, options, inverseBlock)
         }
       case f: FullExpr if f.label == "eq" =>
         val op1 = unpackArg(f.args(0), context, options)
@@ -61,14 +61,14 @@ case class Block(expr: Expr, contents: List[Renderable]) extends Renderable {
         if (op1.values == op2.values)
           renderChunk(context, options, fnBlock)
         else
-          renderChunk(context, options, inverseBlock)
+          evalElse(context, options, inverseBlock)
       case f: FullExpr if f.label == "ne" =>
         val op1 = unpackArg(f.args(0), context, options)
         val op2 = unpackArg(f.args(1), context, options)
         if (op1.values != op2.values)
           renderChunk(context, options, fnBlock)
         else
-          renderChunk(context, options, inverseBlock)
+          evalElse(context, options, inverseBlock)
       case f: FullExpr if f.label == "or" =>
         val ops = f.args.map(a => unpackArg(a, context, options))
         val cond = ops.foldLeft(false) {
@@ -82,7 +82,7 @@ case class Block(expr: Expr, contents: List[Renderable]) extends Renderable {
         if (cond)
           renderChunk(context, options, fnBlock)
         else
-          renderChunk(context, options, inverseBlock)
+          evalElse(context, options, inverseBlock)
       case f: FullExpr if f.label == "and" =>
         val ops = f.args.map(a => unpackArg(a, context, options))
         val cond = ops.foldLeft(true) {
@@ -96,7 +96,7 @@ case class Block(expr: Expr, contents: List[Renderable]) extends Renderable {
         if (cond)
           renderChunk(context, options, fnBlock)
         else
-          renderChunk(context, options, inverseBlock)
+          evalElse(context, options, inverseBlock)
 
       // =======
       // Javascript/User-Provided Helpers
@@ -116,6 +116,20 @@ case class Block(expr: Expr, contents: List[Renderable]) extends Renderable {
     }
   }
 
+  private def evalElse(context: Context, options: Map[String, Any], contents: List[Renderable])(implicit sb: Scalabars) = {
+    // First one in else is a Thing of kind 'else'.  See if there is a sub-expression to evaluate
+    if (contents.size > 0)
+      contents.head.asInstanceOf[Thing].expr match {
+        case f: FullExpr =>
+          val expr = FullExpr(f.args.head.asInstanceOf[PathArgument].path.head, f.args.tail)
+          Block(expr, contents.tail).render(context, options)
+        case _ =>
+          renderChunk(context, options, contents)
+      }
+    else
+      renderChunk(context, options, contents)
+  }
+
   private def unpackArg(a: Argument, context: Context, options: Map[String, Any]) = a match {
     case p: PathArgument => p match {
       case a if a.path == List("true")      => JBool(true)
@@ -133,7 +147,7 @@ case class Block(expr: Expr, contents: List[Renderable]) extends Renderable {
     val elseLoc = c.indexWhere(a => a.isInstanceOf[Thing] && a.asInstanceOf[Thing].expr.label == "else")
     if (elseLoc >= 0) {
       val (a, b) = c.splitAt(elseLoc)
-      (a, b.tail)
+      (a, b)
     } else
       (c, List.empty[Renderable])
   }

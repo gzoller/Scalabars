@@ -1,6 +1,7 @@
 import Dependencies._
 import com.typesafe.sbt.SbtScalariform._
 import scalariform.formatter.preferences._
+import scoverage.ScoverageKeys._
 
 ThisBuild / scalaVersion     := "2.12.8"
 ThisBuild / version          := "0.1.0-SNAPSHOT"
@@ -17,6 +18,9 @@ val scalajack    = "co.blocke"          %% "scalajack"     % "6.0.1"
 
 val basicSettings = Seq(
   javacOptions ++= Seq("-Xlint:-removal"),
+  coverageMinimum             := 92,  // really this should be 96% but mongo isn't quite up to that yet
+  coverageFailOnMinimum       := true,
+  parallelExecution in ThisBuild := false,
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignArguments, true)
     .setPreference(AlignParameters, true)

@@ -1,6 +1,7 @@
 package co.blocke.scalabars
 
 import org.apache.commons.text.StringEscapeUtils
+import org.json4s._
 
 trait Renderable {
   val label: String
@@ -16,8 +17,7 @@ trait Expression extends Renderable {
 // 1) a simple tag (replacement variable)
 // 2) a no-arg helper label
 // 3) a helper label + args
-case class SimpleExpression(path: Path, args: List[Argument], isEscaped: Boolean = false) extends Expression {
-  val label: String = path.last
+case class SimpleExpression(label: String, path: Path, args: List[Argument], isEscaped: Boolean = false) extends Expression {
   def render(options: Options): String = {
     val str: StringWrapper = (options.handlebars, path) match {
       case IsHelper(helper) => helper.eval(this, options)
@@ -32,9 +32,35 @@ case class SimpleExpression(path: Path, args: List[Argument], isEscaped: Boolean
   }
 }
 
-case class BlockExpression(path: Path, args: List[Argument], contents: List[Renderable], isInverted: Boolean = false) extends Expression {
-  val label: String = path.last
-  def render(options: Options): String = ""
+// Can be:
+// 1) Boolean (truthy/falsey) on a field
+// 2) No-arg helper
+// 3) Helper label + args
+case class BlockExpression(label: String, path: Path, args: List[Argument], contents: List[Renderable], isInverted: Boolean = false) extends Expression {
+
+  def render(options: Options): String = {
+    (options.handlebars, path) match {
+      //      case IsHelper(helper) => helper.eval(this, options)
+      //    val (fn,inverse) = examineBlock(options: Options)
+      case _ =>
+        val cond = options.context.get.find(path).value match {
+          case b: JBool   => b.value
+          case JNothing   => false
+          case a: JArray  => a.arr.nonEmpty
+          case o: JObject => o.children.nonEmpty
+          case _          => true
+        }
+        if (cond || isInverted) {
+          Template(contents, options).render(options.context.get)
+        } else
+          ""
+    }
+  }
+
+  private def examineBlock(options: Options): (Template, Template) =
+    contents.zipWithIndex.collectFirst {
+      case (SimpleExpression("else", List("else"), _, _), i) => contents.splitAt(i)
+    }.orElse(Some(contents, List.empty[Renderable])).map { case (fn, inv) => (Template(fn, options), Template(inv, options)) }.get
 }
 
 case class Comment() extends Renderable {

@@ -110,29 +110,32 @@ class Interpreting extends FunSpec with Matchers {
         sb.compile("Hello, {{context}}!").render(c) should equal("Hello, Mike -> Mike!")
       }
     }
-    /*
     describe("Block Interpreting") {
       it("Simple expr works") {
         sb.compile("Hello, {{#name}}Foo{{/name}}!").render(c) should equal("Hello, Foo!") // exists
+        sb.compile("Hello, {{#A.[0].heavy}}Foo{{/A.[0].heavy}}!").render(c) should equal("Hello, Foo!") // exists
         sb.compile("Hello, {{#bogus}}Foo{{/bogus}}!").render(c) should equal("Hello, !") // doesn't exist
+        sb.compile("Hello, {{#A.[0].bogus}}Foo{{/A.[0].bogus}}!").render(c) should equal("Hello, !") // doesn't exist
+        sb.compile("Hello, {{^bogus}}Foo{{/bogus}}!").render(c) should equal("Hello, Foo!") // doesn't exist
       }
-      it("Basic block") {
-        sb.compile("Hello, {{#noop}}Foo{{/noop}}!").render(c) should be("Hello, Foo!")
-      }
-      it("Basic block with context variable") {
-        sb.compile("Hello, {{#oneop}}Foo{{/oneop}}!").render(c) should be("Hello, 2_Foo_!")
-      }
-      it("Basic block with parameter variable") {
-        sb.compile("""Hello, {{#strArg "boom"}}Foo{{/strArg}}!""").render(c) should be("Hello, boom _Foo_!")
-      }
-      it("Iteration block (each example)") {
-        sb.compile("""Hello, {{#jsEach A}}Is this {{heavy}}?{{/jsEach}}!""").render(c) should be("Hello, Is this cool?Is this wicked?!")
-      }
-      it("else block (if example)") {
-        sb.compile("""Hello, {{#jsIf A}}here{{else}}missing{{/jsIf}}!""").render(c) should be("Hello, here!")
-        sb.compile("""Hello, {{#jsIf bogus}}here{{else}}missing{{/jsIf}}!""").render(c) should be("Hello, missing!")
-      }
+      /*
+        it("Basic block") {
+          sb.compile("Hello, {{#noop}}Foo{{/noop}}!").render(c) should be("Hello, Foo!")
+        }
+        it("Basic block with context variable") {
+          sb.compile("Hello, {{#oneop}}Foo{{/oneop}}!").render(c) should be("Hello, 2_Foo_!")
+        }
+        it("Basic block with parameter variable") {
+          sb.compile("""Hello, {{#strArg "boom"}}Foo{{/strArg}}!""").render(c) should be("Hello, boom _Foo_!")
+        }
+        it("Iteration block (each example)") {
+          sb.compile("""Hello, {{#jsEach A}}Is this {{heavy}}?{{/jsEach}}!""").render(c) should be("Hello, Is this cool?Is this wicked?!")
+        }
+        it("else block (if example)") {
+          sb.compile("""Hello, {{#jsIf A}}here{{else}}missing{{/jsIf}}!""").render(c) should be("Hello, here!")
+          sb.compile("""Hello, {{#jsIf bogus}}here{{else}}missing{{/jsIf}}!""").render(c) should be("Hello, missing!")
+        }
+      */
     }
-    */
   }
 }

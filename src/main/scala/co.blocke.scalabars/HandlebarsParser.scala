@@ -13,17 +13,17 @@ case class HandlebarsParser() {
   private def escapedExpr[_: P] = P("{{" ~~ expr ~ "}}").map(_.copy(isEscaped = true))
   private def unescapedExpr[_: P] = P("{{{" ~~ expr ~ "}}}")
 
-  private def openNegBlock[_: P] = P("{{^" ~/ label.! ~ "}}")
+  private def openNegBlock[_: P] = P("{{^" ~/ path ~ "}}")
   private def openBlock[_: P] = P("{{#" ~/ expr ~ "}}")
   private def closeBlock[_: P](closeLabel: String) = P("{{/" ~/ closeLabel ~ "}}")
 
   //  private def partial[_: P] = P("{{>" ~/ label.! ~ "}}").map(Partial(_, false))
   //  private def dynammicPartial[_: P] = P("{{>" ~ "(" ~ label.! ~ ")" ~ "}}").map(Partial(_, true))
 
-  private def expr[_: P] = P(path ~/ arg.rep).map { case (p, a) => SimpleExpression(p, a.toList) }
+  private def expr[_: P] = P(path ~/ arg.rep).map { case (l, p, a) => SimpleExpression(l, p, a.toList) }
   private def arg[_: P]: P[Argument] = P(assignmentArg | stringArg | pathArg)
   private def stringArg[_: P] = P("\"" ~ CharsWhile(_ != '"').! ~ "\"" | "'" ~ CharsWhile(_ != '\'').! ~ "'").map(r => StringArgument(r))
-  private def pathArg[_: P] = P(path).map(p => PathArgument(p))
+  private def pathArg[_: P] = P(path).map(p => PathArgument(p._2))
   private def literalArg[_: P] = P("true" | "false" | "null" | "undefined" | "-".? ~~ CharsWhile(_.isDigit) ~~ ("." ~~ CharsWhile(_.isDigit)).?).!.map(r => StringArgument(r))
   private def assignmentArg[_: P] = P(label ~ "=" ~ P(literalArg | pathArg | stringArg)).map(r => AssignmentArgument(r._1, r._2))
 
@@ -34,19 +34,20 @@ case class HandlebarsParser() {
     for {
       expr <- openBlock
       contents <- renderable.repX ~ closeBlock(expr.label)
-    } yield BlockExpression(expr.path, expr.args, contents.toList)
+    } yield BlockExpression(expr.label, expr.path, expr.args, contents.toList)
   )
   private def inverted[_: P] = P(
     for {
       label <- openNegBlock
-      block <- renderable.rep ~ closeBlock(label)
-    } yield BlockExpression(List(label), List.empty[Argument], block.toList, true)
+      block <- renderable.rep ~ closeBlock(label._1)
+    } yield BlockExpression(label._1, label._2, List.empty[Argument], block.toList, true)
   )
 
-  private def path[_: P] = P(element ~~ (separator ~~ element).repX).map(c => List(c._1) ++ c._2)
+  private def path[_: P] = P(element ~~ (separator ~~ element).repX)
+    .map { case (f, pair) => ((f + pair.map(s => s._1 + s._2).mkString("")), f +: pair.map(_._2).toList) }
   private def element[_: P] = P(label | upDir | index | ".".! ~ &("/"))
-  private def index[_: P] = P(("[" ~/ CharsWhile(_.isDigit).repX(1)).! ~ "]")
-  private def separator[_: P] = P("/" | ".")
+  private def index[_: P] = P(("[" ~/ CharsWhile(_.isDigit).repX(1) ~ "]").!)
+  private def separator[_: P] = P("/" | ".").!
   private def upDir[_: P] = P("..".!)
   private def label[_: P]: P[String] = CharsWhileIn("""_a-zA-Z0-9""").repX(1).!
 
@@ -63,7 +64,7 @@ case class HandlebarsParser() {
 
   def pathCompile(input: String): Path = {
     parse(input, path(_)) match {
-      case Parsed.Success(value, _)                => value
+      case Parsed.Success(value, _)                => value._2
       case f @ Parsed.Failure(label, index, extra) => throw new BarsException("Path parsing failed for: " + f.toString)
     }
   }

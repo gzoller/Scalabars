@@ -1,11 +1,13 @@
 package co.blocke.scalabars
 
 import org.json4s._
+import org.apache.commons.text.StringEscapeUtils
 
 abstract class Helper(val params: List[String] = List.empty[String]) {
 
   object Handlebars {
     def SafeString(s: String) = SafeStringWrapper(s)
+    def escapeExpression(s: String) = StringEscapeUtils.escapeHtml4(s)
   }
 
   def eval(expr: Expression, options: Options): StringWrapper = {
@@ -29,14 +31,13 @@ abstract class Helper(val params: List[String] = List.empty[String]) {
     run(expr)(newOptions)
   }
 
-  def resolve(target: String)(implicit options: Options): String = {
-    println("Resolving " + target)
+  def resolve(target: String)(implicit options: Options): String =
     options.handlebars.pathCompile(target) match {
       case p if p.size == 1 => // either a parameter, or a hash key, or a this deref, in that order
         params.indexOf(p.head) match {
           case i if i < 0 => // look in hash, then 'this'
             options.hash.get(p.head).asInstanceOf[Option[Context]]
-              .map(_.resolve(List("this"), options))
+              .map(_.resolve(List("."), options))
               .orElse(Some(options.context.get.resolve(p, options))).get
           case i => // get Options.params[i] (passed-in helper parameters) and resolve
             options.params(i) match {
@@ -51,7 +52,6 @@ abstract class Helper(val params: List[String] = List.empty[String]) {
         }
       case p => options.context.get.resolve(p, options)
     }
-  }
 
   def run(expr: Expression)(implicit options: Options): StringWrapper
 

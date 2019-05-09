@@ -24,8 +24,8 @@ case class Context(value: JValue, history: List[JValue]) {
             case "." | "this" => hist
             case ".."         => hist.tail // pop up one level
             case n if n.startsWith("[") => hist.head match { // deref array index
-              case ja: JArray => ja.arr(n.tail.toInt) +: hist
-              case _          => throw new BarsException(s"Illegal attempt to index (${n.tail.toInt}) a non-array")
+              case ja: JArray => ja.arr(n.tail.dropRight(1).toInt) +: hist
+              case _          => throw new BarsException(s"Illegal attempt to index (${n.tail.dropRight(1).toInt}) a non-array")
             }
             case e => hist.head match {
               case jo: JObject => jo \ e +: hist

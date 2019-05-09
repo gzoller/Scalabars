@@ -14,9 +14,9 @@ case class SimpleTemplate(compiled: List[Renderable], options: Options) extends 
   def render(context: Context): String = compiled.map(_.render(options.copy(context = Some(context)))).mkString("")
 }
 
-object NoopTemplate extends Template {
-  val compiled = List.empty[Renderable]
-  val options: Options = Options(null)
-  def render[T](contextObj: T)(implicit tt: TypeTag[T]): String = ""
-  def render(context: Context): String = ""
-}
+//object NoopTemplate extends Template {
+//  val compiled = List.empty[Renderable]
+//  val options: Options = Options(null)
+//  def render[T](contextObj: T)(implicit tt: TypeTag[T]): String = ""
+//  def render(context: Context): String = ""
+//}

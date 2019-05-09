@@ -67,5 +67,13 @@ class Parsing() extends FunSpec with Matchers {
         sb.compile("Hello, {{^name}}Foo{{/name}}!").compiled should equal(List(Text("Hello, "), BlockExpression("name", List("name"), List(), List(Text("Foo")), true), Text("!")))
       }
     }
+    describe("Parse failures") {
+      it("Path parsing fails") {
+        the[BarsException] thrownBy sb.parsePath("$%ads.*(") should have message "Path parsing failed: Parsed.Failure(Position 1:1, found \"$%ads.*(\")"
+      }
+      it("Template parsing fails") {
+        the[BarsException] thrownBy sb.compile("Wow {{this} is great!") should have message "Template parsing failed: Parsed.Failure(Position 1:11, found \"} is great\")"
+      }
+    }
   }
 }

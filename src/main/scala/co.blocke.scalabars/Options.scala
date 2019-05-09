@@ -15,28 +15,17 @@ case class Options(
   def fn(): String = _fn.get.render(context.get)
   def fn(c: Context): String = _fn.get.render(c)
   def inverse(): String = rewireInverse().render(context.get)
+  // $COVERAGE-OFF$Don't really need/use this... included for completeness.  Not sure how to test!
   def inverse(c: Context): String = rewireInverse().render(c)
+  // $COVERAGE-ON$
   def isFalsy(c: Context): Boolean = !calcCond(c.value)
   def hash(key: String): String = {
-    handlebars.parsePath(key) match {
-      case root :: rest => _hash.get(root) match {
-        case Some(s: StringArgument) => s.value
-        case Some(a: PathArgument)   => context.get.resolve(a.path ++ rest, this)
-        case None                    => ""
-      }
-      //        ("Root; " + root + " --> " + _hash.get(root))
+    val (root :: rest) = handlebars.parsePath(key)
+    _hash.get(root) match {
+      case Some(s: StringArgument) => s.value
+      case Some(a: PathArgument)   => context.get.resolve(a.path ++ rest, this)
+      case _                       => ""
     }
-    //    _hash.get(key) match {
-    //      case Some(s: StringArgument) =>
-    //        println("Str arg: " + s)
-    //        s.value
-    //      case Some(a: PathArgument) =>
-    //        println("Path Arg: " + a)
-    //        context.get.resolve(a.path, this)
-    //      case None =>
-    //        println("Not found: " + key)
-    //        ""
-    //    }
   }
 
   private def calcCond(v: JValue) = v match {
@@ -51,17 +40,16 @@ case class Options(
   // can have nested expressions.  If so, we need to morph this Option's Inverse template into
   // a new Options having fn == this.inverse, and changing else into the embedded expression.
   // If this isn't an embedded else we can just ignore it--it renders to "".
-  private def rewireInverse() = {
+  private def rewireInverse() =
     _inverse match {
       case Some(SimpleTemplate(SimpleExpression("else", _, PathArgument(_) :: _, _) :: _, _)) =>
         val elseExp = _inverse.get.compiled.head.asInstanceOf[SimpleExpression]
         val firstArg = elseExp.args.head.asInstanceOf[PathArgument]
         val newExp = BlockExpression(firstArg.path.head, List(firstArg.path.head), elseExp.args.tail, _inverse.get.compiled.tail)
         SimpleTemplate(List(newExp), _inverse.get.options)
-      case Some(_) =>
-        _inverse.get
-      case None => // Do-nothing Template
-        NoopTemplate
+      case Some(x) => x
+      // $COVERAGE-OFF$Should Never Happen(tm)
+      case None    => throw new BarsException("rewiring inverse failed.  Should Never Happen(tm)")
+      // $COVERAGE-ON$
     }
-  }
 }

@@ -117,6 +117,7 @@ class Interpreting extends FunSpec with Matchers {
         sb.compile("Hello, {{#bogus}}Foo{{/bogus}}!").render(c) should equal("Hello, !") // doesn't exist
         sb.compile("Hello, {{#A.[0].bogus}}Foo{{/A.[0].bogus}}!").render(c) should equal("Hello, !") // doesn't exist
         sb.compile("Hello, {{^bogus}}Foo{{/bogus}}!").render(c) should equal("Hello, Foo!") // doesn't exist
+        sb.compile("Hello, {{! comment }}Sarah, nice {{!-- another --}}to see you!").render(c) should equal("Hello, Sarah, nice to see you!")
       }
     }
     describe("Helper Block Interpreting") {

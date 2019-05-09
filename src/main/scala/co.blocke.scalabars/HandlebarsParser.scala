@@ -28,7 +28,7 @@ case class HandlebarsParser() {
   private def assignmentArg[_: P] = P(label ~ "=" ~ P(literalArg | pathArg | stringArg)).map(r => AssignmentArgument(r._1, r._2))
 
   private def strChars[_: P] = P(CharsWhile(_ != '{').!).map(Text(_))
-  private def comment[_: P] = P("{{!" ~/ CharPred(_ != '}').rep ~ "}}\n").map(_ => Comment())
+  private def comment[_: P] = P("{{!" ~/ CharPred(_ != '}').rep ~ "}}").map(_ => Comment())
 
   private def block[_: P] = P(
     for {
@@ -54,18 +54,15 @@ case class HandlebarsParser() {
   //-----------------------------
   def compile(input: String): List[Renderable] = {
     parse(input, template(_)) match {
-      case Parsed.Success(value, _) => value.toList
-      case f @ Parsed.Failure(label, index, extra) =>
-        println(f.trace())
-        List.empty[Renderable]
-      //        throw new Exception("Boom " + f.toString)
+      case Parsed.Success(value, _)                => value.toList
+      case f @ Parsed.Failure(label, index, extra) => throw new BarsException("Template parsing failed: " + f.toString)
     }
   }
 
   def pathCompile(input: String): Path = {
     parse(input, path(_)) match {
       case Parsed.Success(value, _)                => value._2
-      case f @ Parsed.Failure(label, index, extra) => throw new BarsException("Path parsing failed for: " + f.toString)
+      case f @ Parsed.Failure(label, index, extra) => throw new BarsException("Path parsing failed: " + f.toString)
     }
   }
 }

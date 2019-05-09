@@ -2,7 +2,7 @@ package co.blocke.scalabars
 
 import co.blocke.scalajack.ScalaJack
 import co.blocke.scalajack.json4s.Json4sFlavor
-import javax.script.ScriptEngineManager
+//import javax.script.ScriptEngineManager
 import scala.reflect.runtime.universe.TypeTag
 import builtins._
 
@@ -24,7 +24,7 @@ case class Scalabars(private val helpers: Map[String, Helper] = Map.empty[String
 
   private lazy val parser = HandlebarsParser()
   private lazy val sjJson = ScalaJack(Json4sFlavor())
-  private[scalabars] lazy val javascript = new ScriptEngineManager().getEngineByName("nashorn")
+  //  private[scalabars] lazy val javascript = new ScriptEngineManager().getEngineByName("nashorn")
 
   private lazy val stockOptions: Map[String, Any] = Map(
     "noEscape" -> false,
@@ -32,15 +32,18 @@ case class Scalabars(private val helpers: Map[String, Helper] = Map.empty[String
   )
 
   def registerHelper(name: String, helper: Helper): Scalabars = this.copy(helpers = helpers + (name -> helper))
-  //def registerHelper(name: String, helperJS: String): Scalabars = this.copy(helpers = helpers + (name -> JSHelper(name, helperJS)))
+  //  def registerHelper(name: String, helperJS: String): Scalabars = this.copy(helpers = helpers + (name -> JSHelper(name, helperJS)))
 
-  def compile(rawTemplate: String, compleOptions: Map[String, Any] = Map.empty[String, Any]) =
-    SimpleTemplate(parser.compile(rawTemplate), Options(this, hash = stockOptions ++ compleOptions))
+  def compile(rawTemplate: String, compleOptions: Map[String, Any] = Map.empty[String, Any]) = {
+    val hashArgs = (stockOptions ++ compleOptions).map { case (k, v) => k -> StringArgument(v.toString) }
+    SimpleTemplate(parser.compile(rawTemplate), Options(this, _hash = hashArgs))
+  }
 
   def pathCompile(p: String): Path = parser.pathCompile(p)
 
   private[scalabars] def toJson4s[T](t: T)(implicit tt: TypeTag[T]) = sjJson.render(t)
   private[scalabars] def getHelper(name: String) = helpers.get(name)
+  private[scalabars] def parsePath(p: String): Path = parser.pathCompile(p)
 
 }
 
@@ -55,4 +58,4 @@ assumeObjects: Removes object existence checks when traversing paths. This is a 
 preventIndent: By default, an indented partial-call causes the output of the whole partial being indented by the same amount. This can lead to unexpected behavior when the partial writes pre-tags. Setting this option to true will disable the auto-indent feature.
 ignoreStandalone: Disables standalone tag removal when set to true. When set, blocks and partials that are on their own line will not remove the whitespace on that line.
 explicitPartialContext: Disables implicit context for partials. When enabled, partials that are not passed a context value will execute against an empty object.
- */ 
+ */

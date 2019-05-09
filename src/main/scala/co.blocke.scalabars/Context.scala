@@ -41,14 +41,8 @@ case class Context(value: JValue, history: List[JValue]) {
 
   def resolve(path: Path, options: Options, swallowNothing: Boolean = true): String =
     find(path).value match {
-      case JNothing if options.hash("strict").asInstanceOf[Boolean] => throw new BarsException("Path not found: " + path.mkString("."))
+      case JNothing if options.hash("strict") == "true" => throw new BarsException("Path not found: " + path.mkString("."))
       case JNothing => ""
       case j => j.values.toString
     }
 }
-
-//def swallowNothing(v: JValue) =
-//v match {
-//  case JNothing => JString("")
-//  case _        => v
-//}

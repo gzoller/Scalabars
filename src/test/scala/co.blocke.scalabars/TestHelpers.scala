@@ -13,20 +13,20 @@ case class BarHelper() extends Helper() {
 }
 
 case class HashHelper() extends Helper() {
-  def run(expr: Expression)(implicit options: Options): StringWrapper = "Hashed " + resolve("this.msg")
+  def run(expr: Expression)(implicit options: Options): StringWrapper = "Hashed " + options.hash("msg")
 }
 
 case class HashObjHelper() extends Helper() {
-  def run(expr: Expression)(implicit options: Options): StringWrapper = "Hashed " + resolve("this.msg.heavy")
+  def run(expr: Expression)(implicit options: Options): StringWrapper = "Hashed " + options.hash("msg.heavy")
 }
 
 case class AllTypesHelper() extends Helper() {
   def run(expr: Expression)(implicit options: Options): StringWrapper =
-    resolve("this.bool") +
-      " " + resolve("this.num") +
-      " " + resolve("this.nope") +
-      " " + resolve("this.nada") +
-      " " + resolve("this.s")
+    options.hash("bool") +
+      " " + options.hash("num") +
+      " " + options.hash("nope") +
+      " " + options.hash("nada") +
+      " " + options.hash("s")
 }
 
 case class RawHelper() extends Helper() {

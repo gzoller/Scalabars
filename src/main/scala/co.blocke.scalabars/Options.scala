@@ -4,19 +4,40 @@ import org.json4s._
 
 case class Options(
     handlebars:  Scalabars,
-    context:     Option[Context]  = None, // i.e. the stack, the global context, etc.
-    helperName:  String           = "",
-    blockParams: List[String]     = List.empty[String],
-    params:      List[Argument]   = List.empty[Argument],
-    _fn:         Option[Template] = None,
-    _inverse:    Option[Template] = None,
-    hash:        Map[String, Any] = Map.empty[String, Any]
+    context:     Option[Context]       = None, // i.e. the stack, the global context, etc.
+    helperName:  String                = "",
+    blockParams: List[String]          = List.empty[String],
+    params:      List[Argument]        = List.empty[Argument],
+    _fn:         Option[Template]      = None,
+    _inverse:    Option[Template]      = None,
+    _hash:       Map[String, Argument] = Map.empty[String, Argument]
 ) {
   def fn(): String = _fn.get.render(context.get)
   def fn(c: Context): String = _fn.get.render(c)
   def inverse(): String = rewireInverse().render(context.get)
   def inverse(c: Context): String = rewireInverse().render(c)
   def isFalsy(c: Context): Boolean = !calcCond(c.value)
+  def hash(key: String): String = {
+    handlebars.parsePath(key) match {
+      case root :: rest => _hash.get(root) match {
+        case Some(s: StringArgument) => s.value
+        case Some(a: PathArgument)   => context.get.resolve(a.path ++ rest, this)
+        case None                    => ""
+      }
+      //        ("Root; " + root + " --> " + _hash.get(root))
+    }
+    //    _hash.get(key) match {
+    //      case Some(s: StringArgument) =>
+    //        println("Str arg: " + s)
+    //        s.value
+    //      case Some(a: PathArgument) =>
+    //        println("Path Arg: " + a)
+    //        context.get.resolve(a.path, this)
+    //      case None =>
+    //        println("Not found: " + key)
+    //        ""
+    //    }
+  }
 
   private def calcCond(v: JValue) = v match {
     case b: JBool   => b.value
@@ -44,12 +65,3 @@ case class Options(
     }
   }
 }
-
-/*
- Runtime:
-
-    "this" -- ??? maybe context + assignments?
-    hash -- ??? maybe compile options?
-    params -- passed in
-    blockParams -- custom stuff for blocks (stock Handlebars)--not MVP
- */ 

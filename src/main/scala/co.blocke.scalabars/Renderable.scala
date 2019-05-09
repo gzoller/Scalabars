@@ -24,7 +24,7 @@ case class SimpleExpression(label: String, path: Path, args: List[Argument], isE
       case _                => options.context.get.resolve(path, options)
     }
     str match {
-      case _: RawStringWrapper if isEscaped && !options.hash("noEscape").asInstanceOf[Boolean] =>
+      case _: RawStringWrapper if isEscaped && options.hash("noEscape") == "false" =>
         StringEscapeUtils.escapeHtml4(str.s)
       case _ =>
         str.s

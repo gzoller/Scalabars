@@ -37,7 +37,7 @@ case class Context(value: JValue, history: List[JValue]) {
     }
   }
 
-  def root(): Context = Context(history.last)
+  def root: Context = Context(history.last)
 
   def resolve(path: Path, options: Options, swallowNothing: Boolean = true): String =
     find(path).value match {

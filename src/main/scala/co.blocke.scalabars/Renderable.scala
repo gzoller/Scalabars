@@ -40,16 +40,11 @@ case class BlockExpression(label: String, path: Path, args: List[Argument], cont
 
   def render(options: Options): String = {
     (options.handlebars, path) match {
-      //      case IsHelper(helper) => helper.eval(this, options)
-      //    val (fn,inverse) = examineBlock(options: Options)
+      case IsHelper(helper) =>
+        val (fn, inverse) = examineBlock(options: Options)
+        helper.eval(this, options.copy(_fn      = Some(fn), _inverse = Some(inverse))).s
       case _ =>
-        val cond = options.context.get.find(path).value match {
-          case b: JBool   => b.value
-          case JNothing   => false
-          case a: JArray  => a.arr.nonEmpty
-          case o: JObject => o.children.nonEmpty
-          case _          => true
-        }
+        val cond = !options.isFalsy(options.context.get.find(path))
         if (cond || isInverted) {
           Template(contents, options).render(options.context.get)
         } else
@@ -76,5 +71,5 @@ case class Text(value: String) extends Renderable {
 // Extractors
 
 object IsHelper {
-  def unapply(p: (Scalabars, List[String])): Option[Helper] = p._1.helpers.get(p._2.head)
+  def unapply(p: (Scalabars, List[String])): Option[Helper] = p._1.getHelper(p._2.head)
 }

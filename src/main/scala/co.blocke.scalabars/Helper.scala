@@ -31,7 +31,9 @@ abstract class Helper(val params: List[String] = List.empty[String]) {
     run(expr)(newOptions)
   }
 
-  def resolve(target: String)(implicit options: Options): String =
+  def resolve(target: String)(implicit options: Options): String = lookup(target).resolve(List("."), options)
+
+  /*
     options.handlebars.pathCompile(target) match {
       case p if p.size == 1 => // either a parameter, or a hash key, or a this deref, in that order
         params.indexOf(p.head) match {
@@ -51,6 +53,32 @@ abstract class Helper(val params: List[String] = List.empty[String]) {
           case a: PathArgument   => options.context.get.find(a.path).resolve(p.tail, options)
         }
       case p => options.context.get.resolve(p, options)
+    }
+    */
+
+  def options(implicit options: Options): Options = options
+
+  def lookup(p: String)(implicit options: Options): Context = lookup(options.handlebars.pathCompile(p))
+  def lookup(p: Path)(implicit options: Options): Context =
+    p match {
+      case p if p.size == 1 => // either a parameter, or a hash key, or a this deref, in that order
+        params.indexOf(p.head) match {
+          case i if i < 0 => // look in hash, then 'this'
+            options.hash.get(p.head).asInstanceOf[Option[Context]]
+              .orElse(Some(options.context.get.find(p))).get
+          case i => // get Options.params[i] (passed-in helper parameters) and resolve
+            options.params(i) match {
+              case s: StringArgument => Context(JString(s.value))
+              case a: PathArgument   => options.context.get.find(a.path)
+            }
+        }
+      case p if params.contains(p.head) =>
+        options.params(params.indexOf(p.head)) match {
+          case s: StringArgument => throw new BarsException("Can't dereference below terminal path element: " + s.value)
+          case a: PathArgument   => options.context.get.find(a.path ++ p.tail)
+        }
+      case p =>
+        options.context.get.find(p)
     }
 
   def run(expr: Expression)(implicit options: Options): StringWrapper

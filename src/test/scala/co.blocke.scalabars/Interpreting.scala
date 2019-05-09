@@ -16,20 +16,20 @@ case class Data(
 
 class Interpreting extends FunSpec with Matchers {
 
-  val sb = Scalabars(Map(
-    "foo" -> FooHelper(),
-    "twotags" -> TwoTagsHelper(),
-    "bar" -> BarHelper(),
-    "hash" -> HashHelper(),
-    "hashObj" -> HashObjHelper(),
-    "allTypes" -> AllTypesHelper(),
-    "raw" -> RawHelper(),
-    "context" -> ContextHelper()
-  ))
+  val sb = Scalabars()
+    .registerHelper("foo", FooHelper())
+    .registerHelper("twotags", TwoTagsHelper())
+    .registerHelper("bar", BarHelper())
+    .registerHelper("hash", HashHelper())
+    .registerHelper("hashObj", HashObjHelper())
+    .registerHelper("allTypes", AllTypesHelper())
+    .registerHelper("raw", RawHelper())
+    .registerHelper("context", ContextHelper())
+    .registerHelper("noop", NoopHelper())
+    .registerHelper("oneop", OneOpHelper())
+    .registerHelper("strArg", StrArgHelper())
+
   /*
-    .registerHelper("noop", """function(options) { return options.fn(this); }""")
-    .registerHelper("oneop", """function(options) { return this.small + "_"+options.fn(this)+"_"; }""")
-    .registerHelper("strArg", """function(msg,options) { return msg + " _"+options.fn(this)+"_"; }""")
     .registerHelper("jsEach", """
                                 |function(context, options) {
                                 |  var ret = "";
@@ -55,7 +55,7 @@ class Interpreting extends FunSpec with Matchers {
   val c = Data("Greg", "<p>Yay!</p>", 15, false, 2L, List(Desc("cool"), Desc("wicked")), Person("Mike", 32))
 
   describe("--------------------------------------\n:  Handlebars Interpreting (Native)  :\n--------------------------------------") {
-    describe("Thing interpreting") {
+    describe("Single tag (non-block) interpreting") {
       it("Interprets 1-element path") {
         sb.compile("Hello, {{name}}!").render(c) should equal("Hello, Greg!")
       }
@@ -118,24 +118,24 @@ class Interpreting extends FunSpec with Matchers {
         sb.compile("Hello, {{#A.[0].bogus}}Foo{{/A.[0].bogus}}!").render(c) should equal("Hello, !") // doesn't exist
         sb.compile("Hello, {{^bogus}}Foo{{/bogus}}!").render(c) should equal("Hello, Foo!") // doesn't exist
       }
-      /*
-        it("Basic block") {
-          sb.compile("Hello, {{#noop}}Foo{{/noop}}!").render(c) should be("Hello, Foo!")
-        }
-        it("Basic block with context variable") {
-          sb.compile("Hello, {{#oneop}}Foo{{/oneop}}!").render(c) should be("Hello, 2_Foo_!")
-        }
-        it("Basic block with parameter variable") {
-          sb.compile("""Hello, {{#strArg "boom"}}Foo{{/strArg}}!""").render(c) should be("Hello, boom _Foo_!")
-        }
-        it("Iteration block (each example)") {
-          sb.compile("""Hello, {{#jsEach A}}Is this {{heavy}}?{{/jsEach}}!""").render(c) should be("Hello, Is this cool?Is this wicked?!")
-        }
-        it("else block (if example)") {
-          sb.compile("""Hello, {{#jsIf A}}here{{else}}missing{{/jsIf}}!""").render(c) should be("Hello, here!")
-          sb.compile("""Hello, {{#jsIf bogus}}here{{else}}missing{{/jsIf}}!""").render(c) should be("Hello, missing!")
-        }
-      */
+    }
+    describe("Helper Block Interpreting") {
+      it("Basic block") {
+        sb.compile("Hello, {{#noop}}Foo{{/noop}}!").render(c) should be("Hello, Foo!")
+      }
+      it("Basic block with context variable") {
+        sb.compile("Hello, {{#oneop}}Foo{{/oneop}}!").render(c) should be("Hello, 2_Foo_!")
+      }
+      it("Basic block with parameter variable") {
+        sb.compile("""Hello, {{#strArg "boom"}}Foo{{/strArg}}!""").render(c) should be("Hello, boom _Foo_!")
+      }
+      it("Iteration block (each example)") {
+        sb.compile("""Hello, {{#each A}}Is this {{heavy}}?{{/each}}!""").render(c) should be("Hello, Is this cool?Is this wicked?!")
+      }
+      it("else block (if example)") {
+        sb.compile("""Hello, {{#if A}}here{{else}}missing{{/if}}!""").render(c) should be("Hello, here!")
+        sb.compile("""Hello, {{#if bogus}}here{{else}}missing{{/if}}!""").render(c) should be("Hello, missing!")
+      }
     }
   }
 }

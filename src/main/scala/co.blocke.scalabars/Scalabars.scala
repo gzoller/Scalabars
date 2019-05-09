@@ -15,7 +15,8 @@ object Scalabars {
       "eq" -> EqHelper(),
       "ne" -> NeHelper(),
       "or" -> OrHelper(),
-      "and" -> AndHelper()
+      "and" -> AndHelper(),
+      "unless" -> UnlessHelper()
     ))
 }
 

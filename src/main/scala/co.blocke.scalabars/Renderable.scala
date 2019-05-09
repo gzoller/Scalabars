@@ -42,11 +42,11 @@ case class BlockExpression(label: String, path: Path, args: List[Argument], cont
     (options.handlebars, path) match {
       case IsHelper(helper) =>
         val (fn, inverse) = examineBlock(options: Options)
-        helper.eval(this, options.copy(_fn      = Some(fn), _inverse = Some(inverse))).s
+        helper.eval(this, options.copy(helperName = path.head, _fn = Some(fn), _inverse = Some(inverse))).s
       case _ =>
         val cond = !options.isFalsy(options.context.get.find(path))
         if (cond || isInverted) {
-          Template(contents, options).render(options.context.get)
+          SimpleTemplate(contents, options).render(options.context.get)
         } else
           ""
     }
@@ -55,7 +55,9 @@ case class BlockExpression(label: String, path: Path, args: List[Argument], cont
   private def examineBlock(options: Options): (Template, Template) =
     contents.zipWithIndex.collectFirst {
       case (SimpleExpression("else", List("else"), _, _), i) => contents.splitAt(i)
-    }.orElse(Some(contents, List.empty[Renderable])).map { case (fn, inv) => (Template(fn, options), Template(inv, options)) }.get
+    }.orElse(Some(contents, List.empty[Renderable])).map {
+      case (fn, inv) => (SimpleTemplate(fn, options), SimpleTemplate(inv, options))
+    }.get
 }
 
 case class Comment() extends Renderable {

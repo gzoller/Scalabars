@@ -2,6 +2,7 @@ package co.blocke.scalabars
 
 import co.blocke.scalajack.ScalaJack
 import co.blocke.scalajack.json4s.Json4sFlavor
+import javax.script.ScriptEngineManager
 import scala.reflect.runtime.universe.TypeTag
 import builtins._
 
@@ -9,7 +10,12 @@ object Scalabars {
   def apply(): Scalabars = Scalabars(
     Map(
       "if" -> IfHelper(),
-      "each" -> EachHelper()
+      "each" -> EachHelper(),
+      "with" -> WithHelper(),
+      "eq" -> EqHelper(),
+      "ne" -> NeHelper(),
+      "or" -> OrHelper(),
+      "and" -> AndHelper()
     ))
 }
 
@@ -17,6 +23,7 @@ case class Scalabars(private val helpers: Map[String, Helper] = Map.empty[String
 
   private lazy val parser = HandlebarsParser()
   private lazy val sjJson = ScalaJack(Json4sFlavor())
+  private[scalabars] lazy val javascript = new ScriptEngineManager().getEngineByName("nashorn")
 
   private lazy val stockOptions: Map[String, Any] = Map(
     "noEscape" -> false,
@@ -24,9 +31,10 @@ case class Scalabars(private val helpers: Map[String, Helper] = Map.empty[String
   )
 
   def registerHelper(name: String, helper: Helper): Scalabars = this.copy(helpers = helpers + (name -> helper))
+  //def registerHelper(name: String, helperJS: String): Scalabars = this.copy(helpers = helpers + (name -> JSHelper(name, helperJS)))
 
   def compile(rawTemplate: String, compleOptions: Map[String, Any] = Map.empty[String, Any]) =
-    Template(parser.compile(rawTemplate), Options(this, hash = stockOptions ++ compleOptions))
+    SimpleTemplate(parser.compile(rawTemplate), Options(this, hash = stockOptions ++ compleOptions))
 
   def pathCompile(p: String): Path = parser.pathCompile(p)
 

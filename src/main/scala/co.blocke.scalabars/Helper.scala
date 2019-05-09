@@ -59,6 +59,10 @@ abstract class Helper(val params: List[String] = List.empty[String]) {
   def options(implicit options: Options): Options = options
 
   def lookup(p: String)(implicit options: Options): Context = lookup(options.handlebars.pathCompile(p))
+  def lookup(a: Argument)(implicit options: Options): Context = a match {
+    case s: StringArgument => lookup(s.value)
+    case p: PathArgument   => lookup(p.path)
+  }
   def lookup(p: Path)(implicit options: Options): Context =
     p match {
       case p if p.size == 1 => // either a parameter, or a hash key, or a this deref, in that order

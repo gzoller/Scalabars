@@ -1,0 +1,23 @@
+package co.blocke.scalabars
+
+case class JSHelper(name: String, js: String) extends Helper() {
+
+  private var hasCompiledJS = false
+
+  def run(expr: Expression)(implicit options: Options): StringWrapper = {
+    if (!hasCompiledJS) {
+      options.handlebars.javascript.eval(js)
+      hasCompiledJS = true
+    }
+    println(this.javascript)
+    ""
+  }
+}
+
+object Foo {
+  private val thing: String = "Yay"
+}
+
+case class Foo() {
+  println(thing)
+}

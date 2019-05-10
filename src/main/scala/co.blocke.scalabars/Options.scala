@@ -1,6 +1,7 @@
 package co.blocke.scalabars
 
 import org.json4s._
+import collection.JavaConverters._
 
 case class Options(
     handlebars:  Scalabars,
@@ -14,6 +15,13 @@ case class Options(
 ) {
   def fn(): String = _fn.get.render(context.get)
   def fn(c: Context): String = _fn.get.render(c)
+
+  // This one is called from JavaScript -- TODO: may be a different input type when migrating off Nashorn!
+  def fn(m: scala.collection.convert.Wrappers.MapWrapper[String, Any]): String = {
+    val scalaM = m.keySet.asScala.zip(m.values.asScala).toMap
+    fn(Context(handlebars.sjJson.render(scalaM)))
+  }
+
   def inverse(): String = rewireInverse().render(context.get)
   // $COVERAGE-OFF$Don't really need/use this... included for completeness.  Not sure how to test!
   def inverse(c: Context): String = rewireInverse().render(c)

@@ -1,7 +1,6 @@
 package co.blocke.scalabars
 
 import org.apache.commons.text.StringEscapeUtils
-import org.json4s._
 
 trait Renderable {
   val label: String

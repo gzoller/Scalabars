@@ -2,18 +2,6 @@ package co.blocke.scalabars
 
 import org.scalatest.{ FunSpec, Matchers }
 
-case class Person(name: String, age: Int)
-case class Desc(heavy: String)
-case class Data(
-    name:   String,
-    msg:    String,
-    aNum:   Int,
-    isOK:   Boolean,
-    small:  Long,
-    A:      List[Desc],
-    player: Person
-)
-
 class Interpreting extends FunSpec with Matchers {
 
   val sb = Scalabars()

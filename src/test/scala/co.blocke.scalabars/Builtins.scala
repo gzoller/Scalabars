@@ -2,8 +2,6 @@ package co.blocke.scalabars
 
 import org.scalatest.{ FunSpec, Matchers }
 
-case class Magic(name: String, stuff: Map[String, Int])
-
 class Builtins() extends FunSpec with Matchers {
 
   val sb = Scalabars()

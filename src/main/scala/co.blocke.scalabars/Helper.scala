@@ -2,7 +2,6 @@ package co.blocke.scalabars
 
 import org.json4s._
 import org.apache.commons.text.StringEscapeUtils
-import org.json4s.native.JsonMethods
 import collection.JavaConverters._
 
 object Handlebars {
@@ -56,22 +55,17 @@ abstract class Helper(val params: List[String] = List.empty[String]) {
         options.context.get.find(p)
     }
 
-  protected def stringifyValue(v: JValue) = v match {
-    case s: JString => s.values match {
-      case "true" | "false" | "null" | "undefined" => s.values
-      case _ if s.values.isNumeric()               => s.values
-      case _                                       => s.values //"\"" + s.values + "\""
-    }
-    case o: JObject => o.values.asJava
+  protected def packValue4js(v: JValue) = v match {
+    case o: JObject => convert(o.values.asJava)
     case a: JArray  => convert(a.values) //a.values.map(x => x.asInstanceOf[Map[String, Any]].asJava).asJava
-    case s          => "" //s.values
+    case i          => i.values.toString
   }
 
+  // Deep-convert Scala colletion to Java
   private def convert(x: Any): Object =
     {
       x match {
         case x: List[_]                        => x.map { convert }.asJava
-        //      case x:collection.mutable.ConcurrentMap[_, _] => x.mapValues(convert).asJava
         case x: collection.mutable.Map[_, _]   => x.mapValues(convert).asJava
         case x: collection.immutable.Map[_, _] => x.mapValues(convert).asJava
         case x: collection.Map[_, _]           => x.mapValues(convert).asJava

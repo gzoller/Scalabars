@@ -37,11 +37,12 @@ case class Options(
   }
 
   private def calcCond(v: JValue) = v match {
-    case b: JBool   => b.value
-    case JNothing   => false
-    case a: JArray  => a.arr.nonEmpty
-    case o: JObject => o.children.nonEmpty
-    case _          => true
+    case b: JBool         => b.value
+    case JNothing         => false
+    case a: JArray        => a.arr.nonEmpty
+    case o: JObject       => o.children.nonEmpty
+    case JString("false") => false
+    case _                => true
   }
 
   // In the case of inverse() we're likely running an 'else' statement.  Some else statements

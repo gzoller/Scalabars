@@ -13,9 +13,9 @@ case class HandlebarsParser() {
   private def escapedExpr[_: P] = P("{{" ~~ expr ~ "}}").map(_.copy(isEscaped = true))
   private def unescapedExpr[_: P] = P("{{{" ~~ expr ~ "}}}")
 
-  private def openNegBlock[_: P] = P("{{^" ~/ path ~ "}}")
-  private def openBlock[_: P] = P("{{#" ~/ expr ~ "}}")
-  private def closeBlock[_: P](closeLabel: String) = P("{{/" ~/ closeLabel ~ "}}")
+  private def openNegBlock[_: P] = P("{{^" ~/ path ~ "}}" ~ "\n".?)
+  private def openBlock[_: P] = P("{{#" ~/ expr ~ "}}" ~ "\n".?)
+  private def closeBlock[_: P](closeLabel: String) = P("{{/" ~/ closeLabel ~ "}}" ~ "\n".?)
 
   //  private def partial[_: P] = P("{{>" ~/ label.! ~ "}}").map(Partial(_, false))
   //  private def dynammicPartial[_: P] = P("{{>" ~ "(" ~ label.! ~ ")" ~ "}}").map(Partial(_, true))
@@ -30,7 +30,7 @@ case class HandlebarsParser() {
   private def assignmentArg[_: P] = P(label ~ "=" ~ P(literalArg | pathArg | stringArg)).map(r => AssignmentArgument(r._1, r._2))
 
   private def strChars[_: P] = P(CharsWhile(_ != '{').!).map(Text(_))
-  private def comment[_: P] = P("{{!" ~/ CharPred(_ != '}').rep ~ "}}").map(_ => Comment())
+  private def comment[_: P] = P("{{!" ~/ CharPred(_ != '}').rep ~ "}}" ~ "\n".?).map(_ => Comment())
 
   private def block[_: P] = P(
     for {

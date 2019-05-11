@@ -27,7 +27,7 @@ case class Scalabars(private val helpers: Map[String, Helper] = Map.empty[String
 
   private lazy val parser = HandlebarsParser()
   private[scalabars] lazy val sjJson = ScalaJack(Json4sFlavor())
-  private lazy val javascript = {
+  private val javascript = {
     val engine = new ScriptEngineManager().getEngineByName("nashorn")
     //    val engine = new ScriptEngineManager().getEngineByName("graal.js")
     val bindings = engine.createBindings()

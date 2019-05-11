@@ -30,7 +30,7 @@ case class Scalabars(private val helpers: Map[String, Helper] = Map.empty[String
   private lazy val javascript = {
     println("--1--")
     val engine = new ScriptEngineManager().getEngineByName("nashorn")
-    println("--2--")
+    println("--2-- "+engine)
     //    val engine = new ScriptEngineManager().getEngineByName("graal.js")
     val bindings = engine.createBindings()
     bindings.put("Handlebars", Handlebars)

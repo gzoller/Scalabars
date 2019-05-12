@@ -62,6 +62,7 @@ abstract class Helper(val params: List[String] = List.empty[String]) {
   }
 
   // Deep-convert Scala colletion to Java
+  // $COVERAGE-OFF$We accept this as working...
   private def convert(x: Any): Object =
     {
       x match {
@@ -77,6 +78,7 @@ abstract class Helper(val params: List[String] = List.empty[String]) {
         case _                                 => x.asInstanceOf[Object]
       }
     }
+  // $COVERAGE-ON$
 
   def run(expr: Expression)(implicit options: Options): StringWrapper
 

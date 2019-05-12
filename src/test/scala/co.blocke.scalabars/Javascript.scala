@@ -77,6 +77,8 @@ class Javascript() extends FunSpec with Matchers {
                                   |}""".stripMargin)
 
       sb2.compile("""Hello, {{#jsEach A}}Is this {{heavy}}?{{/jsEach}}!""").render(c) should be("Hello, Is this cool?Is this wicked?!")
+      // run twice to test caching of compiled code
+      sb2.compile("""Hello, {{#jsEach A}}Is this {{heavy}}?{{/jsEach}}!""").render(c) should be("Hello, Is this cool?Is this wicked?!")
     }
   }
 }

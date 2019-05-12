@@ -20,6 +20,7 @@ class Builtins() extends FunSpec with Matchers {
       }
       it("if") {
         sb.compile("""Hello, {{#if A}}here{{else}}missing{{/if}} End!""").render(c) should be("Hello, here End!")
+        sb.compile("""Hello, {{#if isOK}}here{{else}}missing{{/if}} End!""").render(c) should be("Hello, missing End!")
         sb.compile("""Hello, {{#if bogus}}here{{else}}missing{{/if}} End!""").render(c) should be("Hello, missing End!")
         sb.compile("""Hello, {{#if stuff}}here{{else}}missing{{/if}} End!""").render(c3) should be("Hello, missing End!")
       }
@@ -89,6 +90,7 @@ class Builtins() extends FunSpec with Matchers {
         sb.compile("""{{#lengthEquals object 3}}yep{{else}}nope{{/lengthEquals}}""").render(objData) should be("nope")
         sb.compile("""{{#lengthEquals collection 3}}yep{{else}}nope{{/lengthEquals}}""").render(listData) should be("yep")
         sb.compile("""{{#lengthEquals collection 0}}yep{{else}}nope{{/lengthEquals}}""").render(listData) should be("nope")
+        sb.compile("""{{#lengthEquals name 2}}yep{{else}}nope{{/lengthEquals}}""").render(c) should be("nope")
       }
       it("sortEach") {
         sb.compile("""{{#sortEach collection}}Foo: {{this}} {{/sortEach}}""").render(listData) should be("Foo: Bender Foo: Fry Foo: Professor Farnsworth ")

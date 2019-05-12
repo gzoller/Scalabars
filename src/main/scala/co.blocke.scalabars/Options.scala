@@ -32,7 +32,9 @@ case class Options(
     _hash.get(root) match {
       case Some(s: StringArgument) => s.value
       case Some(a: PathArgument)   => context.get.resolve(a.path ++ rest, this)
+      // $COVERAGE-OFF$This shouldn't be possible, but for safety and compiler (match) happiness
       case _                       => ""
+      // $COVERAGE-ON$
     }
   }
 

@@ -23,7 +23,8 @@ case class HandlebarsParser() {
   private def expr[_: P] = P(path ~/ arg.rep).map { case (l, p, a) => SimpleExpression(l, p, a.toList) }
   private def arg[_: P]: P[Argument] = P(assignmentArg | stringArg | literal | pathArg)
   private def literal[_: P] = P("true" | "false" | "null" | "undefined" | number).!.map(r => StringArgument(r))
-  private def number[_: P] = P(("-".? ~~ CharsWhileIn("0-9").? ~~ ".".? ~~ CharsWhileIn("0-9")).!)
+  private def number[_: P] = P(("-".? ~~ CharsWhileIn("0-9") ~~ ("." ~~ CharsWhileIn("0-9")).?).!)
+  //  private def number[_: P] = P(("-".? ~~ CharsWhileIn("0-9").? ~~ ".".? ~~ CharsWhileIn("0-9")).!)
   private def stringArg[_: P] = P("\"" ~~ CharsWhile(_ != '"').! ~~ "\"" | "'" ~~ CharsWhile(_ != '\'').! ~~ "'").map(r => StringArgument(r))
   private def pathArg[_: P] = P(path).map(p => PathArgument(p._2))
   private def literalArg[_: P] = P("true" | "false" | "null" | "undefined" | "-".? ~~ CharsWhile(_.isDigit) ~~ ("." ~~ CharsWhile(_.isDigit)).?).!.map(r => StringArgument(r))

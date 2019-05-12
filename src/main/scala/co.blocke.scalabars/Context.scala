@@ -14,10 +14,6 @@ case class Context(value: JValue, history: List[JValue], extras: Map[String, Con
   // Returns JNothing if path not found
   def find(path: Path): Context = {
     path match {
-      case List("true")      => Context(JBool(true))
-      case List("false")     => Context(JBool(false))
-      case List("null")      => Context(JNull)
-      case List("undefined") => Context(JNothing)
       case a if a.length == 1 && a.head.isNumeric() =>
         Context(Try(a.head.toLong).toOption.map(m => JLong(m)).getOrElse(JDouble(a.head.toDouble)))
       case a if a.length == 1 && extras.contains(a.head) =>

@@ -10,7 +10,7 @@ notifications:
       - info@blocke.com
 
 jdk:
-  - oraclejdk8
+  - oraclejdk11
 
 script:
   - sbt clean coverage test coverageReport && sbt coverageAggregate
@@ -21,8 +21,3 @@ before_install:
 
 after_success:
   - sbt coverageReport coveralls
-
-addons:
-  apt:
-    packages:
-      - oracle-java8-installer

@@ -29,6 +29,7 @@ stuff here
 * and
 * any
 * contains
+* default
 * eachIndex
 * eachProperty
 * empty
@@ -38,6 +39,7 @@ stuff here
 * last
 * length
 * lengthEquals
+* markdown
 * ne
 * sortEach
 * or

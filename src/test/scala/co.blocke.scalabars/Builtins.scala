@@ -122,6 +122,28 @@ class Builtins() extends FunSpec with Matchers {
         sb.compile("""This is my {{#url "http://www.yahoo.com"}}x = {{host}} - y = {{port}} - {{collection.[1]}}{{else}}nope{{/url}}""").render(listData) should be("This is my x = www.yahoo.com - y = -1 - Fry")
         sb.compile("""This is my {{#url "bogust123"}}x = {{host}} - y = {{port}} - {{collection.[1]}}{{else}}nope{{/url}}""").render(listData) should be("This is my nope")
       }
+      it("markdown") {
+        val t = """{{#markdown}}
+                  |## Post of the day
+                  |```scala
+                  |val x = "foo"
+                  |```
+                  |Vestibulum posuere, {{name}} sed bibendum posuere
+                  |### Section 1
+                  |Pellentesque nulla {{player.age}}, volutpat vitae
+                  |{{/markdown}}""".stripMargin
+        sb.compile(t).render(c) should equal("""<h2>Post of the day</h2>
+                                               |<pre><code class="language-scala">val x = &quot;foo&quot;
+                                               |</code></pre>
+                                               |<p>Vestibulum posuere, Greg sed bibendum posuere</p>
+                                               |<h3>Section 1</h3>
+                                               |<p>Pellentesque nulla 32, volutpat vitae</p>
+                                               |""".stripMargin)
+      }
+      it("default") {
+        sb.compile("""Hello, {{default name "nobody"}}!""").render(c) should be("Hello, Greg!")
+        sb.compile("""Hello, {{default name2 "nobody"}}!""").render(c) should be("Hello, nobody!")
+      }
     }
     describe("Comparisons") {
       it("eq") {

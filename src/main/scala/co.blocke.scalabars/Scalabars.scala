@@ -37,6 +37,8 @@ object Scalabars {
       "lengthEquals" -> LengthEqualsHelper(),
       "sortEach" -> SortEachHelper(),
       "url" -> UrlHelper(),
+      "markdown" -> MarkdownHelper(),
+      "default" -> DefaultHelper(),
       "unless" -> UnlessHelper()
     ))
 }

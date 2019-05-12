@@ -1,6 +1,6 @@
 package co.blocke.scalabars
 
-import org.graalvm.polyglot.{ Context => GraalContext }
+//import org.graalvm.polyglot.{ Context => GraalContext }
 
 case class Person(name: String, age: Int)
 case class Desc(heavy: String)

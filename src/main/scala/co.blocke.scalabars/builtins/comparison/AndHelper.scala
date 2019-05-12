@@ -1,8 +1,6 @@
 package co.blocke.scalabars
 package builtins.comparison
 
-import co.blocke.scalabars.{ BlockExpression, Expression, Helper, Options, StringWrapper }
-
 case class AndHelper() extends Helper() { // get params from expr since it's varargs
   def run(expr: Expression)(implicit options: Options): StringWrapper =
     expr match {

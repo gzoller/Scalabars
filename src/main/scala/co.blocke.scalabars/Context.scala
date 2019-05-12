@@ -15,7 +15,11 @@ case class Context(value: JValue, history: List[JValue], extras: Map[String, Con
   def find(path: Path): Context = {
     path match {
       case a if a.length == 1 && a.head.isNumeric() =>
-        Context(Try(a.head.toLong).toOption.map(m => JLong(m)).getOrElse(JDouble(a.head.toDouble)))
+        Context(Try(JLong(a.head.toLong)).toOption
+          .getOrElse(Try(JDouble(a.head.toDouble)).toOption
+            // $COVERAGE-OFF$This shouldn't be possible, but for safety and compiler (match) happiness
+            .getOrElse(JNothing)))
+      // $COVERAGE-ON$
       case a if a.length == 1 && extras.contains(a.head) =>
         extras(a.head)
       case _ =>

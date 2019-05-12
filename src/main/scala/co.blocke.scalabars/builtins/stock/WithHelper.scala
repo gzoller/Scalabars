@@ -1,5 +1,5 @@
 package co.blocke.scalabars
-package builtins.collections
+package builtins.stock
 
 import org.json4s._
 

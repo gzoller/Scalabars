@@ -1,5 +1,5 @@
 package co.blocke.scalabars
-package builtins
+package builtins.stock
 
 case class IfHelper() extends Helper(List("conditional")) {
   def run(expr: Expression)(implicit options: Options): StringWrapper =

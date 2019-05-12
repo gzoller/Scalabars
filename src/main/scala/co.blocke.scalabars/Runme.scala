@@ -24,7 +24,7 @@ object Runme extends App {
 
   val sb = Scalabars()
 
-  val t = """{{#sortEach collection}}Foo: {{this}} {{/sortEach}}"""
+  val t = """This is my {{#url "http://www.yahoo.com"}}x = {{host}} - y = {{port}} - {{collection.[1]}}{{/url}}"""
 
   val data = Map("collection" -> List("Harry", "Sally", "Larry"))
   val data2 = Map("object" -> Map("one" -> 1, "two" -> 2))

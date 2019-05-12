@@ -5,8 +5,10 @@ import co.blocke.scalajack.json4s.Json4sFlavor
 import javax.script._
 
 import scala.reflect.runtime.universe.TypeTag
-import builtins._
-import co.blocke.scalabars.builtins.collections._
+import builtins.collections._
+import builtins.misc._
+import builtins.stock._
+import builtins.comparison._
 import org.json4s.native.JsonMethods
 
 object Scalabars {
@@ -34,6 +36,7 @@ object Scalabars {
       "length" -> LengthHelper(),
       "lengthEquals" -> LengthEqualsHelper(),
       "sortEach" -> SortEachHelper(),
+      "url" -> UrlHelper(),
       "unless" -> UnlessHelper()
     ))
 }

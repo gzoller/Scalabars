@@ -1,5 +1,5 @@
 package co.blocke.scalabars
-package builtins
+package builtins.stock
 
 import org.json4s.JArray
 

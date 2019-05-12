@@ -22,6 +22,16 @@ case class Foo() {
 
 object Runme extends App {
 
+  val sb = Scalabars()
+
+  val t = """{{#sortEach collection}}Foo: {{this}} {{/sortEach}}"""
+
+  val data = Map("collection" -> List("Harry", "Sally", "Larry"))
+  val data2 = Map("object" -> Map("one" -> 1, "two" -> 2))
+
+  println(sb.compile(t).render(data))
+
+  /*
   println("Version: " + System.getProperty("java.vendor") + " " + System.getProperty("java.version"))
   val engine = new ScriptEngineManager().getEngineByName("nashorn")
   //  val engine = new ScriptEngineManager().getEngineByName("graal.js")
@@ -34,6 +44,7 @@ object Runme extends App {
   println("Say " + engine.eval("""myFn.call({"x":"bar"},'Fred')""")) // "Say Hi, Fred!"
 
   println("Is x? " + engine.eval("this"))
+  */
 }
 
 //"""{"foo":"bar"}"""

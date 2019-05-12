@@ -7,7 +7,9 @@ object Context {
   def apply(value: JValue): Context = Context(value, List(value)) // history initially == scope at top-level
 }
 
-case class Context(value: JValue, history: List[JValue]) {
+// extras is an auxilliary 'this', a place where {{tag}} gets resolved as if it was local.
+// Typical usage is when a helper wants to set and pass context variables into a loop handler.  See EachIndexHelper.
+case class Context(value: JValue, history: List[JValue], extras: Map[String, Context] = Map.empty[String, Context]) {
 
   // Returns JNothing if path not found
   def find(path: Path): Context = {
@@ -18,6 +20,8 @@ case class Context(value: JValue, history: List[JValue]) {
       case List("undefined") => Context(JNothing)
       case a if a.length == 1 && a.head.isNumeric() =>
         Context(Try(a.head.toLong).toOption.map(m => JLong(m)).getOrElse(JDouble(a.head.toDouble)))
+      case a if a.length == 1 && extras.contains(a.head) =>
+        extras(a.head)
       case _ =>
         val newHistory = path.foldLeft(history) {
           case (hist, pathElement) => pathElement match {

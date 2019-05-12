@@ -1,7 +1,5 @@
 package co.blocke
 
-import collection.JavaConverters._
-
 package object scalabars {
 
   type Path = List[String]

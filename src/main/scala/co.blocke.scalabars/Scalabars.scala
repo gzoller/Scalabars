@@ -6,7 +6,7 @@ import javax.script._
 
 import scala.reflect.runtime.universe.TypeTag
 import builtins._
-
+import co.blocke.scalabars.builtins.collections._
 import org.json4s.native.JsonMethods
 
 object Scalabars {
@@ -14,11 +14,26 @@ object Scalabars {
     Map(
       "if" -> IfHelper(),
       "each" -> EachHelper(),
+      "eachIndex" -> EachIndexHelper(),
+      "eachProperty" -> EachPropertyHelper(),
       "with" -> WithHelper(),
       "eq" -> EqHelper(),
       "ne" -> NeHelper(),
       "or" -> OrHelper(),
       "and" -> AndHelper(),
+      "first" -> FirstHelper(),
+      "last" -> LastHelper(),
+      "empty" -> EmptyHelper(),
+      "withBefore" -> WithBeforeHelper(),
+      "withAfter" -> WithAfterHelper(),
+      "withFirst" -> WithFirstHelper(),
+      "withLast" -> WithLastHelper(),
+      "contains" -> ContainsHelper(),
+      "any" -> AnyHelper(),
+      "join" -> JoinHelper(),
+      "length" -> LengthHelper(),
+      "lengthEquals" -> LengthEqualsHelper(),
+      "sortEach" -> SortEachHelper(),
       "unless" -> UnlessHelper()
     ))
 }
@@ -28,9 +43,7 @@ case class Scalabars(private val helpers: Map[String, Helper] = Map.empty[String
   private lazy val parser = HandlebarsParser()
   private[scalabars] lazy val sjJson = ScalaJack(Json4sFlavor())
   private lazy val javascript = {
-    println("--1--")
     val engine = new ScriptEngineManager().getEngineByName("nashorn")
-    println("--2-- "+engine)
     //    val engine = new ScriptEngineManager().getEngineByName("graal.js")
     val bindings = engine.createBindings()
     bindings.put("Handlebars", Handlebars)

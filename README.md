@@ -27,9 +27,24 @@ stuff here
 
 #### Extra Helpers We Included
 * and
+* any
+* contains
+* eachIndex
+* eachProperty
+* empty
 * eq
+* first
+* join
+* last
+* length
+* lengthEquals
 * ne
+* sortEach
 * or
+* withAfter
+* withBefore
+* withFirst
+* withLast
 
 ### A word about Javascript on the JVM...
 Scalabars currently uses the Nashorn JavaScript engine embedded in the JVM, or at least it was until recently.  Unfortunately Nashorn is deprecated in favor of GraalVM, but since this VM isn't (as of this writing) even GA 1.0, it's not something we're going to support just yet as we need solutions that run in the enterprise today.

@@ -17,6 +17,11 @@ The advantage of writing helpers in pure Scala and not using any JavaScript help
 
 stuff here
 
+## Developing Your Own Helpers
+
+* Scala
+* JavaScript
+
 ## Included Helpers (thread-safe)
 
 #### Stock Handlebars Built-In Helpers

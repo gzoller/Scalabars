@@ -6,18 +6,9 @@ case class JSHelper(name: String, js: String) extends Helper() {
 
   def run(expr: Expression)(implicit options: Options): StringWrapper = {
     if (!hasCompiledJS) {
-      options.handlebars.javascript.eval(js)
+      options.handlebars.run(s"var $name = " + js)
       hasCompiledJS = true
     }
-    println(this.javascript)
-    ""
+    options.handlebars.runHelper(name, options.context.get, options.params.map(a => packValue4js(lookup(a).value)) :+ options)
   }
-}
-
-object Foo {
-  private val thing: String = "Yay"
-}
-
-case class Foo() {
-  println(thing)
 }

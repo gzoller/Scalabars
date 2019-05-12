@@ -2,13 +2,14 @@ package co.blocke.scalabars
 
 import org.json4s._
 import org.apache.commons.text.StringEscapeUtils
+import collection.JavaConverters._
+
+object Handlebars {
+  def SafeString(s: String) = SafeStringWrapper(s)
+  def escapeExpression(s: String) = StringEscapeUtils.escapeHtml4(s)
+}
 
 abstract class Helper(val params: List[String] = List.empty[String]) {
-
-  object Handlebars {
-    def SafeString(s: String) = SafeStringWrapper(s)
-    def escapeExpression(s: String) = StringEscapeUtils.escapeHtml4(s)
-  }
 
   def eval(expr: Expression, options: Options): StringWrapper = {
     val (assignments, literalsAndPaths) = expr.args.partition(_.isInstanceOf[AssignmentArgument])
@@ -27,20 +28,18 @@ abstract class Helper(val params: List[String] = List.empty[String]) {
   def options(implicit options: Options): Options = options
 
   def lookup(p: String)(implicit options: Options): Context = lookup(options.handlebars.pathCompile(p))
+
   def lookup(a: Argument)(implicit options: Options): Context = a match {
-    case s: StringArgument => lookup(s.value)
+    case s: StringArgument => Context(JString(s.value))
     case p: PathArgument   => lookup(p.path)
   }
+
   def lookup(p: Path)(implicit options: Options): Context =
     p match {
       case p if p.size == 1 => // either a parameter, or a hash key, or a this deref, in that order
         params.indexOf(p.head) match {
           case i if i < 0 => // look in hash, then 'this'
             options.context.get.find(p)
-          //            options.hash.get(p.head).map(_ match {
-          //              case s: StringArgument => Context(JString(s.value))
-          //              case a: PathArgument   => options.context.get.find(a.path)
-          //            }).orElse(Some(options.context.get.find(p))).get
           case i => // get Options.params[i] (passed-in helper parameters) and resolve
             options.params(i) match {
               case s: StringArgument => Context(JString(s.value))
@@ -55,6 +54,31 @@ abstract class Helper(val params: List[String] = List.empty[String]) {
       case p =>
         options.context.get.find(p)
     }
+
+  protected def packValue4js(v: JValue) = v match {
+    case o: JObject => convert(o.values.asJava)
+    case a: JArray  => convert(a.values) //a.values.map(x => x.asInstanceOf[Map[String, Any]].asJava).asJava
+    case i          => i.values.toString
+  }
+
+  // Deep-convert Scala colletion to Java
+  // $COVERAGE-OFF$We accept this as working...
+  private def convert(x: Any): Object =
+    {
+      x match {
+        case x: List[_]                        => x.map { convert }.asJava
+        case x: collection.mutable.Map[_, _]   => x.mapValues(convert).asJava
+        case x: collection.immutable.Map[_, _] => x.mapValues(convert).asJava
+        case x: collection.Map[_, _]           => x.mapValues(convert).asJava
+        case x: collection.mutable.Set[_]      => x.map(convert).asJava
+        case x: collection.mutable.Buffer[_]   => x.map(convert).asJava
+        case x: Iterable[_]                    => x.map(convert).asJava
+        case x: Iterator[_]                    => x.map(convert).asJava
+        case x: Array[_]                       => x.map(convert)
+        case _                                 => x.asInstanceOf[Object]
+      }
+    }
+  // $COVERAGE-ON$
 
   def run(expr: Expression)(implicit options: Options): StringWrapper
 

@@ -1,6 +1,7 @@
 package co.blocke.scalabars
 
 import org.json4s._
+import collection.JavaConverters._
 
 case class Options(
     handlebars:  Scalabars,
@@ -14,6 +15,13 @@ case class Options(
 ) {
   def fn(): String = _fn.get.render(context.get)
   def fn(c: Context): String = _fn.get.render(c)
+
+  // This one is called from JavaScript -- TODO: may be a different input type when migrating off Nashorn!
+  def fn(m: scala.collection.convert.Wrappers.MapWrapper[String, Any]): String = {
+    val scalaM = m.keySet.asScala.zip(m.values.asScala).toMap
+    fn(Context(handlebars.sjJson.render(scalaM)))
+  }
+
   def inverse(): String = rewireInverse().render(context.get)
   // $COVERAGE-OFF$Don't really need/use this... included for completeness.  Not sure how to test!
   def inverse(c: Context): String = rewireInverse().render(c)
@@ -24,16 +32,19 @@ case class Options(
     _hash.get(root) match {
       case Some(s: StringArgument) => s.value
       case Some(a: PathArgument)   => context.get.resolve(a.path ++ rest, this)
+      // $COVERAGE-OFF$This shouldn't be possible, but for safety and compiler (match) happiness
       case _                       => ""
+      // $COVERAGE-ON$
     }
   }
 
   private def calcCond(v: JValue) = v match {
-    case b: JBool   => b.value
-    case JNothing   => false
-    case a: JArray  => a.arr.nonEmpty
-    case o: JObject => o.children.nonEmpty
-    case _          => true
+    case b: JBool         => b.value
+    case JNothing         => false
+    case a: JArray        => a.arr.nonEmpty
+    case o: JObject       => o.children.nonEmpty
+    case JString("false") => false
+    case _                => true
   }
 
   // In the case of inverse() we're likely running an 'else' statement.  Some else statements

@@ -1,5 +1,5 @@
 package co.blocke.scalabars
-package builtins
+package builtins.comparison
 
 case class EqHelper() extends Helper(List("a", "b")) {
   def run(expr: Expression)(implicit options: Options): StringWrapper =

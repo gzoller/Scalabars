@@ -2,18 +2,6 @@ package co.blocke.scalabars
 
 import org.scalatest.{ FunSpec, Matchers }
 
-case class Person(name: String, age: Int)
-case class Desc(heavy: String)
-case class Data(
-    name:   String,
-    msg:    String,
-    aNum:   Int,
-    isOK:   Boolean,
-    small:  Long,
-    A:      List[Desc],
-    player: Person
-)
-
 class Interpreting extends FunSpec with Matchers {
 
   val sb = Scalabars()
@@ -74,6 +62,12 @@ class Interpreting extends FunSpec with Matchers {
       it("Interprets 1-element path (unescaped)") {
         sb.compile("Hello, {{{msg}}}!").render(c) should equal("Hello, <p>Yay!</p>!")
       }
+      it("Invalid dereferencing of object should fail") {
+        the[BarsException] thrownBy sb.compile("{{name.thing}}").render(c) should have message "Illegal attempt to reference an object member (thing) on a non-object"
+      }
+      it("Invalid dereferencing of array should fail") {
+        the[BarsException] thrownBy sb.compile("{{name.[2]}}").render(c) should have message "Illegal attempt to index (2) a non-array"
+      }
     }
     describe("Helper Interpreting") {
       it("Interprets no-arg helper") {
@@ -87,6 +81,7 @@ class Interpreting extends FunSpec with Matchers {
       }
       it("Interprets 2 arg helper") {
         sb.compile("Hello, {{twotags A.[1] 42}}!").render(c) should equal("Hello, Show 42 then wicked!")
+        sb.compile("Hello, {{twotags A.[1] -42.2}}!").render(c) should equal("Hello, Show -42.2 then wicked!")
       }
       it("Interprets helper with hash string assignments") {
         sb.compile("Hello, {{hash msg=\"Hola\"}}!").render(c) should equal("Hello, Hashed Hola!")

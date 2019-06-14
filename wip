@@ -1,0 +1,6 @@
+
+Working on problem with aloneOnLine.  Particiularly WS.  If WS has no NL then it may or may not be alone on the line.
+Trouble is we don't know for sure without knowing what was rendered *before* the leading WS.  If nothing, then aloneOnLine == true, 
+otherwise its false.
+
+Need a zipper????

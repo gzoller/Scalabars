@@ -1,0 +1,33 @@
+
+Handlebars whitespace handling is a bit tricky (at least to me).  So here's some reverse-engineered behavior documentation
+so I won't forget how this works.
+
+
+Each non-Text tag ("{{...}}") is guaranteed, by the parser, to be surrounded by Whitespace tags (WS), which may have content, or be empty,
+but they will always be there.  Even the close tags ("{{/...}}") are likewise sandwiched by Whitespace tags.
+
+So let's take the following cases with descriptions of whitespace control (wsctl), or "~" decorations, which can be present on
+either side of a tag:  {{~foo}}, {{foo~}}, {{~foo~}}
+
+    1) Single (non-block) tag.  It has leading/trailing Whitespace tags surrounding it.
+
+       Behavior for {{foo}} (no wsctl): print all surround WS.
+       Behavior for {{~foo}}: ignore leading WS
+       Behavior for {{foo~}}: ignore trailing WS
+       Behavior for {{~foo~}}: ignore all WS
+
+    2) Block tags have 4 whitespace areas to manage:
+
+        (ws1){{tag}}(ws2) ...body... (ws3){{/tag}}(ws4)
+
+       It appears that if a closing tag is all on the same line, its trailing whitepsace (ws4) is ignored **to the \n** (not the entire
+       whitespace, which might wrap to the next line).  {{/tag~}} would delete all trailing whitespace, even beyond the \n.
+
+       If tag on one line, trim ws1 and ws2 to closest proximate NL
+
+       (If inserted leading TagProxy has ~ trailing ctl then internal render should've already handed it!)
+       (If inserted trailing (close) TagProxy has ~ leading ctl then internal render should've alrady handled it!)
+
+       If /tag is on one line then trim ws3 and ws4 to closest proximate NL
+
+

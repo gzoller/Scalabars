@@ -1,28 +1,31 @@
 package co.blocke.scalabars
 
-import co.blocke.scalajack.ScalaJack
-import co.blocke.scalajack.json4s.Json4sFlavor
-import javax.script._
+import model._
+import parsing._
+import org.graalvm.polyglot.{ Context => JSContext }
 
-import scala.reflect.runtime.universe.TypeTag
-import builtins.collections._
-import builtins.misc._
-import builtins.stock._
-import builtins.comparison._
-import org.json4s.native.JsonMethods
+import helpers.collections._
+import helpers.stock._
+import helpers.comparison._
+import helpers.misc._
 
 object Scalabars {
   def apply(): Scalabars = Scalabars(
     Map(
-      "if" -> IfHelper(),
+      // Stock Handlebars
       "each" -> EachHelper(),
-      "eachIndex" -> EachIndexHelper(),
-      "eachProperty" -> EachPropertyHelper(),
+      "if" -> IfHelper(),
+      "lookup" -> LookupHelper(),
+      "unless" -> UnlessHelper(),
       "with" -> WithHelper(),
+
+      // Comparisons
       "eq" -> EqHelper(),
       "ne" -> NeHelper(),
       "or" -> OrHelper(),
       "and" -> AndHelper(),
+
+      // Collections
       "first" -> FirstHelper(),
       "last" -> LastHelper(),
       "empty" -> EmptyHelper(),
@@ -36,61 +39,67 @@ object Scalabars {
       "length" -> LengthHelper(),
       "lengthEquals" -> LengthEqualsHelper(),
       "sortEach" -> SortEachHelper(),
-      "url" -> UrlHelper(),
-      "markdown" -> MarkdownHelper(),
+      "withLookup" -> WithLookupHelper(),
+
+      // Misc
       "default" -> DefaultHelper(),
-      "unless" -> UnlessHelper()
-    ))
+      "include" -> IncludeHelper(),
+      "markdown" -> MarkdownHelper(),
+      "raw" -> RawHelper(),
+      "url" -> UrlHelper(),
+
+      // Internal
+      "else" -> ElseHelper()
+    ), collection.mutable.Map.empty[String, PartialHelper], NoopFileGetter()
+  )
 }
 
-case class Scalabars(private val helpers: Map[String, Helper] = Map.empty[String, Helper]) {
+case class Scalabars(
+    private val helpers:             Map[String, Helper],
+    private[scalabars] val partials: collection.mutable.Map[String, PartialHelper] = collection.mutable.Map.empty[String, PartialHelper],
+    fileGetter:                      FileGetter
+) {
 
-  private lazy val parser = HandlebarsParser()
-  private[scalabars] lazy val sjJson = ScalaJack(Json4sFlavor())
-  private lazy val javascript = {
-    val engine = new ScriptEngineManager().getEngineByName("nashorn")
-    //    val engine = new ScriptEngineManager().getEngineByName("graal.js")
-    val bindings = engine.createBindings()
-    bindings.put("Handlebars", Handlebars)
-    engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE)
-    engine
-  }
+  override def toString: String = "Scalabars(helpers=" + helpers.keys.mkString("[", ",", "]") + ")"
 
-  private[scalabars] def run(js: String): Any = javascript.eval(js)
-  private[scalabars] def runHelper(fnName: String, context: Context, args: List[Object]): StringWrapper = {
-    val inv = javascript.asInstanceOf[Invocable]
+  private lazy val parser = HandlebarsParser()(this)
 
-    // Gymnastics to glom context into "this" context within js function.  The bind() Javascript function accomplishes this.
-    // Totally NOT thread-safe, but Javascript isn't mutli-threaded anyway, so....
-    val bindFn = "bind_" + fnName
-    javascript.eval(bindFn + s" = $fnName.bind(" + JsonMethods.compact(JsonMethods.render(context.value)) + ")")
-
-    inv.invokeFunction(bindFn, args: _*) match {
-      case s: String        => s
-      case w: StringWrapper => w
-      case x                => x.toString
-    }
-  }
-
-  private lazy val stockOptions: Map[String, Any] = Map(
-    "noEscape" -> false,
-    "strict" -> false
+  private lazy val stockOptions: Map[String, EvalResult[_]] = Map(
+    "noEscape" -> BooleanEvalResult(false),
+    "strict" -> BooleanEvalResult(false),
+    "explicitPartialContext" -> BooleanEvalResult(false)
   )
 
-  def registerHelper(name: String, helper: Helper): Scalabars = this.copy(helpers = helpers + (name -> helper))
-  def registerHelper(name: String, helperJS: String): Scalabars = this.copy(helpers = helpers + (name -> JSHelper(name, helperJS)))
-
-  def compile(rawTemplate: String, compleOptions: Map[String, Any] = Map.empty[String, Any]) = {
-    val hashArgs = (stockOptions ++ compleOptions).map { case (k, v) => k -> StringArgument(v.toString) }
-    SimpleTemplate(parser.compile(rawTemplate), Options(this, _hash = hashArgs))
+  // This is here so we get a new Context (javascript engine) for every Scalabars() instance.
+  private[scalabars] lazy val js = {
+    val ctx = JSContext.newBuilder().allowAllAccess(true).build()
+    val bindings = ctx.getBindings("js")
+    bindings.putMember("Handlebars", Handlebars(this))
+    ctx
   }
 
-  def pathCompile(p: String): Path = parser.pathCompile(p)
+  //  def registerHelper(name: String, helperJS: String): Scalabars = this.copy(helpers = helpers + (name -> JSHelper(name, helperJS)))
+  def registerHelper(name: String, helper: Helper): Scalabars = this.copy(helpers = helpers + (name -> helper))
+  def registerPartial(name: String, script: String): Scalabars = {
+    partials.put(name, PartialHelper(name, compile(script)))
+    this
+  }
 
-  private[scalabars] def toJson4s[T](t: T)(implicit tt: TypeTag[T]) = sjJson.render(t)
-  private[scalabars] def getHelper(name: String) = helpers.get(name)
-  private[scalabars] def parsePath(p: String): Path = parser.pathCompile(p)
+  // Used for inline partialss
+  //  private[scalabars] def registerPartial(name: String, contents: List[Renderable]) =
+  //  partials.put(name, NormalTemplate(contents, Options(this, _hash = stockOptions)))
 
+  def setFileGetter(fileGetter: FileGetter) = this.copy(fileGetter = fileGetter)
+
+  def compile(rawTemplate: String, compileOptions: Map[String, Boolean] = Map.empty[String, Boolean]) = {
+    val hashArgs = stockOptions ++ compileOptions.map { case (k, v) => (k, BooleanEvalResult(v)) }
+    SBTemplate(parser.compile(rawTemplate), Options(this, _hash = hashArgs))
+  }
+
+  private[scalabars] def _compileFromContents(contents: Seq[Renderable]) = SBTemplate(contents.toList, Options(this, _hash = stockOptions))
+
+  private[scalabars] def getHelper(name: String): Option[Helper] = helpers.get(name)
+  private[scalabars] def getPartial(name: String) = partials.get(name)
 }
 
 /*

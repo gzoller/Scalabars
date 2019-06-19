@@ -20,6 +20,13 @@ either side of a tag:  {{~foo}}, {{foo~}}, {{~foo~}}
 
         (ws1){{tag}}(ws2) ...body... (ws3){{/tag}}(ws4)
 
+            -- converted to --
+
+        (ws1){{tag}}(ws4)  --> next top-level tag
+          {{openProxy}}(ws2)
+          ...body...
+          (ws3){{closeProxy}}
+
        It appears that if a closing tag is all on the same line, its trailing whitepsace (ws4) is ignored **to the \n** (not the entire
        whitespace, which might wrap to the next line).  {{/tag~}} would delete all trailing whitespace, even beyond the \n.
 

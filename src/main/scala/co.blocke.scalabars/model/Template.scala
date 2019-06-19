@@ -28,60 +28,15 @@ case class EmptyTemplate() extends Template {
   val compiled = List.empty[Renderable]
 }
 
-case class RenderControl(
-    opts:            Options,
-    clipTrailingWS:  Boolean       = false,
-    flushTrailingWS: Boolean       = false,
-    accumulatedWS:   String        = "", // to accumulate leading ws
-    out:             StringBuilder = new StringBuilder()
-) {
-
-  def addWS(ws: String): RenderControl =
-    if (clipTrailingWS)
-      this.copy(accumulatedWS  = clipToNextNL(this.accumulatedWS + ws), clipTrailingWS = false)
-    else if (flushTrailingWS)
-      this
-    else
-      this.copy(accumulatedWS = this.accumulatedWS + ws)
-
-  // Add rendered Text element
-  def addText(s: String): RenderControl = this.copy(
-    accumulatedWS   = "",
-    out             = this.out.append(this.accumulatedWS + s),
-    clipTrailingWS  = false,
-    flushTrailingWS = false)
-
-  // Like addText but don't disturb clipping of trailing WS handling (used for adding rendered contents of a tag)
-  def addContent(s: String): RenderControl = this.copy(
-    accumulatedWS = "",
-    out           = this.out.append(this.accumulatedWS + s)
-  )
-
-  def reset(): RenderControl = this.copy(clipTrailingWS  = false, flushTrailingWS = false)
-  def flushLeading(): RenderControl = this.copy(accumulatedWS = "")
-  def flushTrailing(): RenderControl = this.copy(flushTrailingWS = true)
-  def clipLeading(): RenderControl = this.copy(accumulatedWS = clipToLastNL(this.accumulatedWS))
-  def clipTrailing(): RenderControl = this.copy(clipTrailingWS = true)
-
-  private def clipToNextNL(s: String): String =
-    s.indexOf('\n') match {
-      case -1 => s
-      case i  => s.splitAt(i)._2.tail
-    }
-  private def clipToLastNL(s: String): String =
-    s.lastIndexOf('\n') match {
-      case -1 => s
-      case i  => s.splitAt(i)._2.tail
-    }
-}
-
 case class SBTemplate(compiled: List[Renderable], options: Options) extends Template {
 
   override def render(context: Context): String = {
     val startingOpts = options.copy(context = context)
 
-    val z = compiled.foldLeft(RenderControl(startingOpts)) {
-      case (rc, renderable) =>
+    val z = compiled.foldLeft(RenderControl(startingOpts)) { case (rc, renderable) => renderable.render(rc) }.out.toString
+
+    /*
+      case (rc, renderable) => renderable.render(rc)
 
         // Get the raw output and any new Options
         val (newOpts, str) = renderable.render(rc.opts) // TODO: pass in inner ws/ctl for block internal render!!!
@@ -118,6 +73,7 @@ case class SBTemplate(compiled: List[Renderable], options: Options) extends Temp
             stage2.addContent(str)
         }
     }.out.toString
+         */
 
     //    println("-----------------------")
     //    println(z)
@@ -125,15 +81,4 @@ case class SBTemplate(compiled: List[Renderable], options: Options) extends Temp
 
     z
   }
-
-  private def clipToNextNL(s: String): String =
-    s.indexOf('\n') match {
-      case -1 => s
-      case i  => s.splitAt(i)._2.tail
-    }
-  private def clipToLastNL(s: String): String =
-    s.lastIndexOf('\n') match {
-      case -1 => s
-      case i  => s.splitAt(i)._2.tail
-    }
 }

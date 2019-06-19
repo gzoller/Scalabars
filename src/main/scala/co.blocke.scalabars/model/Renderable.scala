@@ -9,7 +9,7 @@ trait Renderable {
   val wsCtlBefore: Boolean
   val wsCtlAfter: Boolean
 
-  def render(options: Options): (Options, String)
+  def render(rc: RenderControl): RenderControl
   def isBlock: Boolean = false
 }
 

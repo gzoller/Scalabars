@@ -12,21 +12,33 @@ case class HelperTag(
     expr:        ParsedExpression,
     blockParams: Seq[String],
     contents:    Seq[Renderable],
-    aloneOnLine: Boolean
+    wsAfter:     String
 ) extends BlockTag with Evalable {
 
   override def isBlock: Boolean = contents.nonEmpty
 
-  def render(options: Options): (Options, String) = {
-    // Since we implicitly convert EvalResult->String, we need to artificially poke Options to tell implicit convert
-    // whether or not to HTML-escape non-safe Strings, per Handlebars behavior
-    implicit val opts: Options =
-      if (isBlock || !isEscaped)
-        options.copy(_hash = options._hash + ("noEscape" -> BooleanEvalResult(true)))
-      else
-        options.copy(_hash = options._hash + ("noEscape" -> BooleanEvalResult(false)))
-    (opts, eval(opts))
-  }
+  override def render(rc: RenderControl): RenderControl =
+    if (isBlock)
+      super.render(rc)
+    else helper match {
+      case ph: PartialHelper =>
+        // Special handling for PartialHelper, which replaces a non-block tag with a block tag.  Need to mock up a block
+        // tag and render.
+        println("HERE: " + ph) // TODO: PartialHelper's 't' is empty!  Shouldn't be!
+        // TODO: Non-inline partials need open/close block wrappers w/ws to work!
+        ph.t.compiled match {
+          case openTag +: body :+ closeTag =>
+            val otag = openTag.asInstanceOf[OpenTagProxy]
+            val ctag = closeTag.asInstanceOf[CloseTagProxy]
+            // convert this non-block into a block by "sewing" in template contents
+            this.copy(contents = otag.copy(wsCtlBefore = wsCtlBefore) +: body :+ ctag.copy(wsCtlAfter = wsCtlAfter, wsAfter = wsAfter))
+            super.render(rc) // now render partial's content as a block
+        }
+      case _ =>
+        implicit val escapeOpts: Options = rc.opts.copy(_hash = rc.opts._hash + ("noEscape" -> BooleanEvalResult(!isEscaped)))
+        val stage1 = checkFlush(rc.reset(), this)
+        stage1.addContent(eval(stage1.opts))
+    }
 
   def eval(options: Options): EvalResult[_] =
     if (nameOrPath == "@partial-block")

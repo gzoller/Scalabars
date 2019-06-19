@@ -62,13 +62,11 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
               case (contents, ws3, closeBlock, ws4) =>
                 // rearrange body and whitespce (and wsCtl) for block (sew te block together to make it look/behave like a single, non-block tag)
                 val wsCtlSave = closeBlock.wsCtlAfter
-                val openIsAlone = allOnOneLine(stage3.leadingWS.ws, stage3.trailingWS.ws)
-                val closeIsAlone = allOnOneLine(ws3.ws, ws4.ws)
-                val body = Seq(OpenTagProxy(stage3.arity, stage3.wsCtlBefore, stage3.wsCtlAfter, openIsAlone), stage3.trailingWS) ++
-                  contents ++ Seq(ws3, closeBlock.copy(aloneOnLine = closeIsAlone, wsCtlAfter = stage3.wsCtlAfter))
-                stage3.copy(aloneOnLine = openIsAlone, contents = body, trailingWS = ws4, wsCtlAfter = wsCtlSave)
+                val body = Seq(OpenTagProxy(stage3.arity, stage3.wsCtlBefore, stage3.wsCtlAfter, stage3.trailingWS.ws), stage3.trailingWS) ++
+                  contents ++ Seq(ws3, closeBlock.copy(wsAfter = ws4.ws))
+                stage3.copy(contents   = body, trailingWS = ws4)
             }
-        case false => P("").map(_ => stage3.copy(aloneOnLine = true)) // pass thru... non-block tag
+        case false => P("").map(_ => stage3) // pass thru... non-block tag
       }
     } yield stage4 match {
       case t if t.ctl.contains("&") => t.copy(arity = 3) // Replace & (no escape) with equivalent arity-3
@@ -78,7 +76,7 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
 
   private def closeBlock[_: P](arity: Int, label: String) =
     P("{".rep(arity) ~ spacesOrNL ~ wsctl.? ~ spacesOrNL ~ "/" ~ spacesOrNL ~ label ~ spacesOrNL ~ wsctl.? ~ spacesOrNL ~ "}".rep(arity))
-      .map { case (wcb, wca) => CloseTagProxy(arity, wcb.isDefined, wca.isDefined, false) }
+      .map { case (wcb, wca) => CloseTagProxy(arity, wcb.isDefined, wca.isDefined, "") }
 
   private def spaces[_: P] = P(CharsWhileIn(" \t", 0))
   private def spacesOrNL[_: P] = P(CharsWhileIn(" \t\n", 0))
@@ -178,22 +176,4 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
         throw new BarsException("Template parsing failed: " + f.toString)
     }
   }
-
-  // Utility to see if a tag exists on the same line (only whitespace)
-  private def allOnOneLine(before: String, after: String): Boolean = {
-    println("Before: " + before)
-    println("After : " + after)
-    val clearBefore = before.reverse.indexWhere(c => c == '\n' || !c.isWhitespace) match {
-      case -1                     => true
-      case i if before(i) == '\n' => true
-      case _                      => false
-    }
-    val clearAfter = after.indexWhere(c => c == '\n' || !c.isWhitespace) match {
-      case -1                    => true
-      case i if after(i) == '\n' => true
-      case _                     => false
-    }
-    clearBefore && clearAfter
-  }
-
 }

@@ -13,11 +13,10 @@ case class TagBuilder(
     blockParams: Seq[String]      = Seq.empty[String],
     wsCtlAfter:  Boolean          = false,
     contents:    Seq[Renderable]  = Seq.empty[Renderable],
-    trailingWS:  Whitespace       = Whitespace(""),
-    aloneOnLine: Boolean          = false
+    trailingWS:  Whitespace       = Whitespace("")
 ) extends BlockRenderable {
 
-  def render(options: Options): (Options, String) = (options, "") // Bogus... This will never be rendered, but this makes parsing a lot easier
+  def render(rc: RenderControl): RenderControl = rc // will never be called... here to make parsing easier
   override def isBlock: Boolean = ctl.isDefined && List("#", "#*", "^", "#>").contains(ctl.get)
 
   // Break out whitespace and convert this builder into a final Tag based on its type
@@ -31,7 +30,7 @@ case class TagBuilder(
               case r              => seq :+ r
             }
         }
-        InlinePartialTag(expr.args.head, unpackedBody, wsCtlBefore, wsCtlAfter, aloneOnLine) // inline partial
+        InlinePartialTag(expr.args.head, unpackedBody, wsCtlBefore, wsCtlAfter, trailingWS.ws) // inline partial
       case Some(">") | Some("#>") =>
         expr.exprArg match {
           // Sub-expression (expression in 1st position).  Create an ExpressionTag
@@ -47,7 +46,7 @@ case class TagBuilder(
                 // Nothing found... this might be bad, or it may be a reference to an inline partial.  Won't know until render-time
                 PartialHelper(expr.name, EmptyTemplate())
             }
-            HelperTag(expr.name, partialHelper, isInverted = false, 3, wsCtlBefore, wsCtlAfter, expr, blockParams, contents, aloneOnLine)
+            HelperTag(expr.name, partialHelper, isInverted = false, 3, wsCtlBefore, wsCtlAfter, expr, blockParams, contents, trailingWS.ws)
         }
       case Some("#") => // Helper
         expr.exprArg match {
@@ -65,7 +64,7 @@ case class TagBuilder(
         }
       case _ =>
         val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name)) // resolve to either known helper, or fall back to assuming its a path
-        HelperTag(expr.name, helper, isInverted = false, 3, wsCtlBefore, wsCtlAfter, expr, blockParams, contents, aloneOnLine)
+        HelperTag(expr.name, helper, isInverted = false, 3, wsCtlBefore, wsCtlAfter, expr, blockParams, contents, trailingWS.ws)
     }
     List(leadingWS, finalTag, trailingWS)
   }

@@ -6,5 +6,5 @@ case class Text(s: String) extends Renderable {
   val wsCtlBefore: Boolean = false
   val wsCtlAfter: Boolean = false
 
-  def render(options: Options): (Options, String) = (options, s)
+  def render(rc: RenderControl): RenderControl = rc.addText(s)
 }

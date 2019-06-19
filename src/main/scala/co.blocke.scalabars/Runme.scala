@@ -31,7 +31,7 @@ object Runme extends App {
     """.stripMargin)
 
   val t =
-    """x{{#* inline "nombre"}}
+    """{{#* inline "nombre"}}
       |A
       |  B -- {{name}}
       |C
@@ -40,6 +40,6 @@ object Runme extends App {
       |{{>nombre}}
       |  Say it loud!""".stripMargin
 
-  sb.compile(t)(json)
+  println(sb.compile(t)(json))
 
 }

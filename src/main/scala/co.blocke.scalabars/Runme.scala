@@ -1,5 +1,7 @@
 package co.blocke.scalabars
 
+import model._
+
 object Runme extends App {
 
   val sb = Scalabars()
@@ -30,6 +32,7 @@ object Runme extends App {
       |}
     """.stripMargin)
 
+  /*
   val t =
     """{{#* inline "nombre"}}
       |A
@@ -40,6 +43,37 @@ object Runme extends App {
       |{{>nombre}}
       |  Say it loud!""".stripMargin
 
+   */
+
+  val t =
+    """{{# name}}
+      |What'cha {{this}} doin?
+      |{{/name}}
+      |Done""".stripMargin
+
   println(sb.compile(t)(json))
 
 }
+
+case class FooHelper() extends Helper() {
+  def run()(implicit options: Options, partials: Map[String, Template]): EvalResult[_] =
+    """This is <b>a</b> test
+      |123
+      |""".stripMargin
+}
+
+/*
+Template:
+     Text(Hello)
+     Whitespace(
+     )
+     HelperTag name (PathHelper(name))
+       args: List()
+       contents:
+         Text(What'cha doin?)
+         Whitespace(
+     )
+     Whitespace(
+     )
+     Text(Done)
+ */ 

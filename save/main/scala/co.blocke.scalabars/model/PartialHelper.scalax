@@ -3,7 +3,7 @@ package model
 
 import org.json4s._
 
-case class PartialHelper(name: String, t: Template) extends Helper("givenContext") {
+case class PartialHelper(name: String, t: Template, tag: Option[Tag] = None) extends Helper("givenContext") {
 
   def run()(implicit options: Options, partials: Map[String, Template]): EvalResult[_] = {
 
@@ -46,12 +46,10 @@ case class PartialHelper(name: String, t: Template) extends Helper("givenContext
 
     options._fn match {
       case EmptyTemplate() => // Non-block partial
-        template.render(partialContext)
+        options.contextualize(t.render(partialContext))
       case _ =>
         val ctx = partialContext.setData("partial-block", options.fn(partialContext))
-        template.render(ctx)
+        options.contextualize(t.render(ctx))
     }
-
-    // TODO: Methinks we need to take all the whitespace info and pass it into Options so fn() & render() can process ws properly.
   }
 }

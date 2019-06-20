@@ -7,7 +7,8 @@ case class RenderControl(
     flushTrailingWS: Boolean       = false,
     accumulatedWS:   String        = "", // to accumulate leading ws
     out:             StringBuilder = new StringBuilder(),
-    isFirst:         Boolean       = true // true only for first element, then false
+    isFirst:         Boolean       = true, // true only for first element, then false
+    isLast:          Boolean       = false
 ) {
 
   def addWS(ws: String): RenderControl =
@@ -37,11 +38,14 @@ case class RenderControl(
   }
 
   // Like addText but don't disturb clipping of trailing WS handling (used for adding rendered contents of a tag)
-  def addContent(s: String): RenderControl = this.copy(
-    out           = this.out.append(this.accumulatedWS + s),
-    isFirst       = false,
-    accumulatedWS = ""
-  )
+  def addContent(s: String): RenderControl = {
+    println("Content: " + s)
+    this.copy(
+      out           = this.out.append(this.accumulatedWS + s),
+      isFirst       = false,
+      accumulatedWS = ""
+    )
+  }
 
   def reset(): RenderControl = this.copy(clipTrailingWS  = false, flushTrailingWS = false)
   def flushLeading(): RenderControl = this.copy(accumulatedWS = "")
@@ -49,14 +53,15 @@ case class RenderControl(
   def clipLeading(): RenderControl = this.copy(accumulatedWS = clipToLastNL(this.accumulatedWS))
   def clipTrailing(): RenderControl = this.copy(clipTrailingWS = true)
 
-  private def clipToNextNL(s: String): String =
+  private def clipToNextNL(s: String): String = {
     s.indexOf('\n') match {
       case -1 => s
-      case i  => s.splitAt(i)._2.tail
+      case i  => s.drop(i + 1)
     }
+  }
   private def clipToLastNL(s: String): String =
     s.lastIndexOf('\n') match {
       case -1 => s
-      case i  => s.splitAt(i)._2.tail
+      case i  => s.drop(i)
     }
 }

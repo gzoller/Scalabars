@@ -12,16 +12,20 @@ case class TagBuilder(
     expr:        ParsedExpression = ParsedExpression("nada"),
     blockParams: Seq[String]      = Seq.empty[String],
     wsCtlAfter:  Boolean          = false,
-    contents:    Seq[Renderable]  = Seq.empty[Renderable],
+    body:        Block            = null,
     trailingWS:  Whitespace       = Whitespace("")
-) extends BlockRenderable {
+) extends Renderable {
+
+  val isLast: Boolean = false
+  def setLast(last: Boolean): Renderable = this
 
   def render(rc: RenderControl): RenderControl = rc // will never be called... here to make parsing easier
-  override def isBlock: Boolean = ctl.isDefined && List("#", "#*", "^", "#>").contains(ctl.get)
+  def isBlock: Boolean = ctl.isDefined && List("#", "#*", "^", "#>").contains(ctl.get)
 
   // Break out whitespace and convert this builder into a final Tag based on its type
   def finalize(implicit sb: Scalabars): List[Renderable] = {
     val finalTag = ctl match {
+      /*
       case Some("#*") =>
         val unpackedBody = contents.foldLeft(Seq.empty[Renderable]) {
           case (seq, item) =>
@@ -48,24 +52,31 @@ case class TagBuilder(
             }
             HelperTag(expr.name, partialHelper, isInverted = false, 3, wsCtlBefore, wsCtlAfter, expr, blockParams, contents, trailingWS.ws)
         }
-      case Some("#") => // Helper
+        */
+      case Some("#") => // Blocks
         expr.exprArg match {
           // Sub-expression (expression in 1st position).  Create an ExpressionTag
           case Some(e) => ??? // TODO
           // Non-expression tag.  Use expr.name and build the HelperTag
-          case None    => ??? // TODO
+          case None =>
+            val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name))
+            BlockHelper(expr.name, helper, isInverted = false, expr, arity, blockParams, body)
+
         }
       case Some("^") => // Inverted Helper (fn & inverse are reversed, but otherwise the same as normal Helper)
         expr.exprArg match {
           // Sub-expression (expression in 1st position).  Create an ExpressionTag
           case Some(e) => ??? // TODO
           // Non-expression tag.  Use expr.name and build the HelperTag
-          case None    => ??? // TODO
+          case None    =>
+            val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name))
+            BlockHelper(expr.name, helper, isInverted = true, expr, arity, blockParams, body)
         }
       case _ =>
-        val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name)) // resolve to either known helper, or fall back to assuming its a path
-        HelperTag(expr.name, helper, isInverted = false, 3, wsCtlBefore, wsCtlAfter, expr, blockParams, contents, trailingWS.ws)
+        val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name)) // resolve to either known non-block helper, or fall back to assuming its a path
+        HelperTag(expr.name, helper, expr, wsCtlBefore, wsCtlAfter, trailingWS.ws, arity)
     }
     List(leadingWS, finalTag, trailingWS)
   }
 }
+

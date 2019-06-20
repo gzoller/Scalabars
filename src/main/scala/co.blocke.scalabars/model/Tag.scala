@@ -8,24 +8,16 @@ trait Tag extends Renderable {
   val wsCtlBefore: Boolean
   val wsCtlAfter: Boolean
   val wsAfter: String // used to determine if tag is alone on line
-  val expr: ParsedExpression
+  val expr: ParsedExpression // "guts" of the tag (e.g. label, arguments)
 
   def isEscaped: Boolean = arity == 2
 
-  // Utility to see if a tag exists on the same line (only whitespace)
-  protected def aloneOnLine(rc: RenderControl, before: String, after: String): Boolean = {
-    val clearBefore = before.reverse.indexWhere(c => c == '\n' || !c.isWhitespace) match {
-      case -1                     => true
-      case i if before(i) == '\n' => true
-      case _                      => false
-    }
-    val clearAfter = after.indexWhere(c => c == '\n' || !c.isWhitespace) match {
-      case -1                    => true
-      case i if after(i) == '\n' => true
-      case _                     => false
-    }
-    (rc.isFirst && clearAfter) || (clearBefore && clearAfter)
-  }
+}
+
+/*
+trait BlockTag extends Tag with Renderable {
+  val body: Block
+  val blockParams: Seq[String]
 
   // For non-block tags, we don't check clipping, just flushing (ws ctl ~).
   protected def checkFlush(rcIn: RenderControl, tag: Tag): RenderControl = {
@@ -34,12 +26,17 @@ trait Tag extends Renderable {
     //    println(stage1.ws())
     if (tag.wsCtlAfter) stage1.flushTrailing() else stage1
   }
-}
 
-trait BlockTag extends Tag with BlockRenderable {
-  val contents: Seq[Renderable]
-  val blockParams: Seq[String]
+  def render(rc: RenderControl): RenderControl = {
+    val stage1 = if (body.openTag.wsCtlBefore) rc.clipLeading() else rc
+    val stage2 = if (body.openTag.wsCtlAfter) stage1.clipTrailing() else stage1
+    val stage3 = body.body.foldLeft(stage2) { case (rcX, renderable) => renderable.render(rcX) }
+    val stage4 = if (body.closeTag.wsCtlBefore) stage3.clipLeading() else stage3
+    val stage5 = if (body.closeTag.wsCtlAfter) stage4.clipLeading() else stage4
+    stage5
+  }
 
+  /*
   protected def checkClipAndFlush(rcIn: RenderControl, tag: Tag): RenderControl = {
     //    println(rcIn.ws())
     val stage1 = if (aloneOnLine(rcIn, rcIn.accumulatedWS, tag.wsAfter)) rcIn.clipLeading().clipTrailing() else rcIn
@@ -60,4 +57,7 @@ trait BlockTag extends Tag with BlockRenderable {
 
     checkClipAndFlush(stage4, closeTag)
   }
+   */
 }
+
+ */

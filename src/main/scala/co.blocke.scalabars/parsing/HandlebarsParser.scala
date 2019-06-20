@@ -60,11 +60,22 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
           P((!(whitespace ~ closeBlock(stage3.arity, stage3.expr.name)) ~/ renderable).rep ~ whitespace ~ closeBlock(stage3.arity, stage3.expr.name) ~ whitespace)
             .map {
               case (contents, ws3, closeBlock, ws4) =>
+                // Finalize any tags that may be inside block
+                val finalContents = contents.foldLeft(Seq.empty[Renderable]) {
+                  case (acc, item) =>
+                    item match {
+                      case tb: TagBuilder => acc ++ tb.finalize
+                      case one            => acc :+ one
+                    }
+                }
                 // rearrange body and whitespce (and wsCtl) for block (sew te block together to make it look/behave like a single, non-block tag)
-                val wsCtlSave = closeBlock.wsCtlAfter
-                val body = Seq(OpenTagProxy(stage3.arity, stage3.wsCtlBefore, stage3.wsCtlAfter, stage3.trailingWS.ws), stage3.trailingWS) ++
-                  contents ++ Seq(ws3, closeBlock.copy(wsAfter = ws4.ws))
-                stage3.copy(contents   = body, trailingWS = ws4)
+                //                val wsCtlSave = closeBlock.wsCtlAfter
+                val body = Block(
+                  OpenTag(stage3.expr, stage3.wsCtlBefore, stage3.wsCtlAfter, stage3.trailingWS.ws, stage3.arity),
+                  stage3.trailingWS +: finalContents :+ ws3,
+                  closeBlock.copy(wsAfter = ws4.ws)
+                )
+                stage3.copy(body       = body, trailingWS = ws4)
             }
         case false => P("").map(_ => stage3) // pass thru... non-block tag
       }
@@ -76,7 +87,7 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
 
   private def closeBlock[_: P](arity: Int, label: String) =
     P("{".rep(arity) ~ spacesOrNL ~ wsctl.? ~ spacesOrNL ~ "/" ~ spacesOrNL ~ label ~ spacesOrNL ~ wsctl.? ~ spacesOrNL ~ "}".rep(arity))
-      .map { case (wcb, wca) => CloseTagProxy(arity, wcb.isDefined, wca.isDefined, "") }
+      .map { case (wcb, wca) => CloseTag(wcb.isDefined, wca.isDefined, "", arity) }
 
   private def spaces[_: P] = P(CharsWhileIn(" \t", 0))
   private def spacesOrNL[_: P] = P(CharsWhileIn(" \t\n", 0))
@@ -163,13 +174,14 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
   def compile(input: String): List[Renderable] = {
     parse(input, template(_)) match {
       case Parsed.Success(value, _) => {
-        value.foldLeft(List.empty[Renderable]) {
+        val set = value.foldLeft(List.empty[Renderable]) {
           case (set, item) =>
             item match {
               case _: Text       => set :+ item
               case t: TagBuilder => set ++ t.finalize
             }
-        }
+        }.reverse
+        (set.head.setLast(true) +: set.tail).reverse
       }
       case f @ Parsed.Failure(label, index, extra) =>
         println("BOOM: " + label + s"($index) " + extra)

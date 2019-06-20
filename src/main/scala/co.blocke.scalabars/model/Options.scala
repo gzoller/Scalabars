@@ -5,14 +5,15 @@ import org.json4s._
 
 case class Options(
     handlebars:  Scalabars,
-    context:     Context                    = Context.NotFound,
-    helperName:  String                     = "",
-    blockParams: List[String]               = List.empty[String],
-    params:      List[EvalResult[_]]        = List.empty[EvalResult[_]],
-    paramValues: List[String]               = List.empty[String],
-    _fn:         Template                   = EmptyTemplate(),
-    _inverse:    Template                   = EmptyTemplate(),
-    _hash:       Map[String, EvalResult[_]] = Map.empty[String, EvalResult[_]]
+    context:     Context                     = Context.NotFound,
+    helperName:  String                      = "",
+    accumulator: (String, Options) => String = null, // *MUST* be set for a block (e.g. fn() calls)
+    blockParams: List[String]                = List.empty[String],
+    params:      List[EvalResult[_]]         = List.empty[EvalResult[_]],
+    paramValues: List[String]                = List.empty[String],
+    _fn:         Template                    = EmptyTemplate(),
+    _inverse:    Template                    = EmptyTemplate(),
+    _hash:       Map[String, EvalResult[_]]  = Map.empty[String, EvalResult[_]]
 ) {
 
   // _hash() returns EvalResult for an intended future purpose so that you can sub-path off the result,
@@ -31,8 +32,10 @@ case class Options(
       c:           Context,
       data:        Map[String, EvalResult[_]],
       blockParams: Map[String, Context]
-  ): String =
-    _fn.render(c.copy(data        = data, blockParams = c.blockParams ++ blockParams))
+  ): String = {
+    val raw = _fn.render(c.copy(data        = data, blockParams = c.blockParams ++ blockParams))
+    accumulator(raw, this)
+  }
 
   def inverse(): String = _inverse.render(context)
   // $COVERAGE-OFF$Don't really need/use this... included for completeness.  Not sure how to test!

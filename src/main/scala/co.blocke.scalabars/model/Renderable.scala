@@ -6,14 +6,8 @@ package model
  * can alter Options (known instance of this is Inline Partials add themselves to options.context).
  */
 trait Renderable {
-  val wsCtlBefore: Boolean
-  val wsCtlAfter: Boolean
-
   def render(rc: RenderControl): RenderControl
-  def isBlock: Boolean = false
-}
 
-trait BlockRenderable extends Renderable {
-  val contents: Seq[Renderable]
-  override def isBlock: Boolean = true
+  val isLast: Boolean // need a flag to know this is the last renderable thing in a template
+  def setLast(last: Boolean): Renderable // a copy-setter
 }

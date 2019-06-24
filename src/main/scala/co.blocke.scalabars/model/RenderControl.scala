@@ -10,10 +10,10 @@ case class RenderControl(
 ) {
 
   def addWS(ws: String): RenderControl =
-    if (clipTrailingWS)
-      this.copy(accumulatedWS  = clipToNextNL(this.accumulatedWS + ws), clipTrailingWS = false)
-    else if (flushTrailingWS || ws.isEmpty)
+    if (flushTrailingWS || ws.isEmpty)
       this // ignore ws contribution if flushing...
+    else if (clipTrailingWS)
+      this.copy(accumulatedWS  = clipToNextNL(this.accumulatedWS + ws), clipTrailingWS = false)
     else
       this.copy(accumulatedWS = this.accumulatedWS + ws)
 

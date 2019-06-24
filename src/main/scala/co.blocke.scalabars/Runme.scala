@@ -36,19 +36,19 @@ object Runme extends App {
 
   val t =
     """{{#* inline "nombre"}}
-      |A
-      |  B -- {{name}}
-      |C
-      |{{/inline}}
-      |My name is:
-      |{{>nombre}}
-      |  Say it loud!""".stripMargin
+ |A
+ |  B -- {{name}}
+ |C
+ |{{/inline}}
+ |My name is:
+ |{{~>nombre}}
+ |  Say it loud!""".stripMargin
 
-  val t2 =
-    """{{# name}}
-        |What'cha {{this}} doin?
-        |{{/name}}
-        |Done""".stripMargin
+  //  val t2 =
+  //    """{{# name}}
+  //        |What'cha {{this}} doin?
+  //        |{{/name}}
+  //        |Done""".stripMargin
   // @formatter:on
 
   println(sb.compile(t)(json))

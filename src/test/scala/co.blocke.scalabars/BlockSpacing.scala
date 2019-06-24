@@ -93,6 +93,41 @@ class BlockSpacing() extends FunSpec with Matchers {
                                                     |Done""".stripMargin)
       }
     }
+    describe("Whitespace control") {
+      it("Before open tag") {
+        sb.compile(
+          """
+            |  {{~# name}}
+            |What'cha {{this}} doin?
+            |{{/name}}
+            |Done""".stripMargin)(json) should be("""What'cha Greg doin?
+                                                    |Done""".stripMargin)
+      }
+      it("After open tag") {
+        sb.compile(
+          """x{{# name~}}
+            |What'cha {{this}} doin?
+            |{{/name}}
+            |Done""".stripMargin)(json) should be("""xWhat'cha Greg doin?
+                                                    |Done""".stripMargin)
+      }
+      it("Before close tag") {
+        sb.compile(
+          """{{# name}}
+            |What'cha {{this}} doin?
+            |{{~/name}}
+            |Done""".stripMargin)(json) should be("""What'cha Greg doin?Done""")
+      }
+      it("After close tag") {
+        sb.compile(
+          """{{# name}}
+            |What'cha {{this}} doin?
+            |{{/name~}}
+            |
+            |  Done""".stripMargin)(json) should be("""What'cha Greg doin?
+                                                    |Done""".stripMargin)
+      }
+    }
   }
 }
 

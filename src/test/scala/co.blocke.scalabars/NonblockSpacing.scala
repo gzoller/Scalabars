@@ -224,6 +224,109 @@ class NonblockSpacing() extends FunSpec with Matchers {
               |  Say it loud!""".stripMargin)
         }
       }
+      describe("Whitespace control") {
+        it("before open") {
+          val t =
+            """
+              |{{~#* inline "nombre"}}
+              |A
+              |  B -- {{name}}
+              |C
+              |{{/inline}}
+              |My name is:
+              |{{>nombre}}
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """My name is:
+              |A
+              |  B -- Greg
+              |C
+              |  Say it loud!""".stripMargin)
+        }
+        it("after open") {
+          val t =
+            """{{#* inline "nombre"~}}
+              |A
+              |  B -- {{name}}
+              |C
+              |{{/inline}}
+              |My name is:
+              |{{>nombre}}
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """My name is:
+              |A
+              |  B -- Greg
+              |C
+              |  Say it loud!""".stripMargin)
+        }
+        it("before close") {
+          val t =
+            """{{#* inline "nombre"}}
+              |A
+              |  B -- {{name}}
+              |C
+              |{{~/inline}}
+              |My name is:
+              |{{>nombre}}
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """My name is:
+              |A
+              |  B -- Greg
+              |C  Say it loud!""".stripMargin)
+        }
+        it("after close") {
+          val t =
+            """{{#* inline "nombre"}}
+              |A
+              |  B -- {{name}}
+              |C
+              |{{/inline~}}
+              |My name is:
+              |{{>nombre}}
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """My name is:
+              |A
+              |  B -- Greg
+              |C
+              |  Say it loud!""".stripMargin)
+        }
+        it("before > tag") {
+          val t =
+            """{{#* inline "nombre"}}
+              |A
+              |  B -- {{name}}
+              |C
+              |{{/inline}}
+              |My name is:
+              |{{~>nombre}}
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """My name is:A
+              |  B -- Greg
+              |C
+              |  Say it loud!""".stripMargin)
+        }
+        it("after > tag") {
+          val t =
+            """{{#* inline "nombre"}}
+              |A
+              |  B -- {{name}}
+              |C
+              |{{/inline}}
+              |My name is:
+              |{{>nombre~}}
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """My name is:
+              |A
+              |  B -- Greg
+              |C
+              |Say it loud!""".stripMargin)
+        }
+      }
     }
   }
 }

@@ -28,7 +28,7 @@ case class TagBuilder(
       case Some(">") =>
         expr.exprArg match {
           // Sub-expression (expression in 1st position).  Create an ExpressionTag
-          case Some(e) => ??? // TODO
+          case Some(e) => ??? // TODO: subexpression
           // Non-expression tag.  Use expr.name and build the PartialTag
           case None =>
             val partialHelper = sb.getPartial(expr.name) match {

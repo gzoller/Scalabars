@@ -36,7 +36,8 @@ case class SBTemplate(
   override def render(context: Context): String = {
     val startingOpts = compileOptions.copy(context = context)
     val rc = compiled.foldLeft(RenderControl(startingOpts)) {
-      case (rcX, renderable) => renderable.render(rcX)
+      case (rcX, renderable) =>
+        renderable.render(rcX)
     }
     rc.out.toString + rc.accumulatedWS
   }

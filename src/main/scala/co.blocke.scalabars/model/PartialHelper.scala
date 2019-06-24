@@ -23,7 +23,7 @@ case class PartialHelper(name: String, t: Template, firstPass: Boolean = true) e
         case ht: HelperTag =>
           RenderableEvalResult(BlockHelper(name, this.copy(firstPass = false), false, ht.expr, ht.arity, Seq.empty[String], Block(template).get))
 
-        case bt: BlockHelper => ??? // TODO
+        case bt: BlockHelper => ??? // TODO: Block partial tag
       }
     } else {
       // 2nd Pass
@@ -61,48 +61,3 @@ case class PartialHelper(name: String, t: Template, firstPass: Boolean = true) e
       options.fn(partialContext)
     }
 }
-
-/*
-case class BlockHelper(
-    name:        String,
-    helper:      Helper,
-    isInverted:  Boolean,
-    expr:        ParsedExpression,
-    arity:       Int,
-    blockParams: Seq[String],
-    body:        Block,
-    isLast:      Boolean          = false
-)
-
-
-  {
-
-
-
-
-    val template = body match {
-      case Some(b) => b.toTemplate(options)
-      case None =>
-        // If body is empty it means we presume this is a ref to an inline template (stored in context).  Let's go find it...
-        partialContext.partials.getOrElse(name, throw new BarsException(s"No partial named '${name}' registered"))
-    }
-
-    parent match {
-      case ht: HelperTag =>  // non-block partial
-        RenderableEvalResult(BlockHelper(???))
-
-      case bh: BlockHelper => // block partial
-        ???
-    }
-
-    options._fn match {
-      case EmptyTemplate() => // Non-block partial
-        template.render(partialContext)
-      case _ =>
-        val ctx = partialContext.setData("partial-block", options.fn(partialContext))
-        template.render(ctx)
-    }
-  }
-}
-
-   */ 

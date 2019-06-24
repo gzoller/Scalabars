@@ -7,7 +7,4 @@ package model
  */
 trait Renderable {
   def render(rc: RenderControl): RenderControl
-
-  val isLast: Boolean // need a flag to know this is the last renderable thing in a template
-  def setLast(last: Boolean): Renderable // a copy-setter
 }

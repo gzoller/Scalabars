@@ -9,8 +9,6 @@ import helpers.stock._
 import helpers.comparison._
 import helpers.misc._
 
-trait PartialHelper
-
 object Scalabars {
   def apply(): Scalabars = Scalabars(
     Map(
@@ -97,7 +95,7 @@ case class Scalabars(
 
   def compile(rawTemplate: String, compileOptions: Map[String, Boolean] = Map.empty[String, Boolean]) = {
     val hashArgs = stockOptions ++ compileOptions.map { case (k, v) => (k, BooleanEvalResult(v)) }
-    SBTemplate(parser.compile(rawTemplate), Options(this, _hash = hashArgs))
+    SBTemplate(parser.compile(rawTemplate).toList, Options(this, _hash = hashArgs))
   }
 
   private[scalabars] def _compileFromContents(contents: Seq[Renderable]) = SBTemplate(contents.toList, Options(this, _hash = stockOptions))

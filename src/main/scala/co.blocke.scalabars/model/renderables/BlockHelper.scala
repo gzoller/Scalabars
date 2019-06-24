@@ -9,18 +9,21 @@ case class BlockHelper(
     expr:        ParsedExpression,
     arity:       Int,
     blockParams: Seq[String],
-    body:        Block,
-    isLast:      Boolean          = false
-) extends Renderable with Evalable with HelperCommon {
+    body:        Block
+) extends Renderable with Evalable with HelperTagCommon {
 
   def render(rc: RenderControl): RenderControl = {
     implicit val escapeOpts: Options = rc.opts.copy(_hash = rc.opts._hash + ("noEscape" -> BooleanEvalResult(true)))
     val raw: String = eval(escapeOpts)
     val wsTws = sliceToRenderables(raw)
-    val stage1 = if (aloneOnLine(rc, rc.accumulatedWS, body.openTag.wsAfter)) rc.clipLeading().clipTrailing() else rc
+
+    val stage1 = if (body.openTag.aloneOnLine) rc.clipLeading().clipTrailing() else rc
     val stage2 = if (body.openTag.wsCtlBefore) stage1.flushLeading() else stage1
-    val stage3 = wsTws.foldLeft(stage2) { case (rcX, renderable) => renderable.render(rcX) }
-    val stage4 = if (aloneOnLine(stage3, stage3.accumulatedWS, body.closeTag.wsAfter)) stage3.clipLeading().clipTrailing() else stage3
+    val stage3 = wsTws.foldLeft(stage2) {
+      case (rcX, renderable) =>
+        renderable.render(rcX)
+    }
+    val stage4 = if (body.closeTag.aloneOnLine) stage3.clipLeading().clipTrailing() else stage3
     val stage5 = if (body.closeTag.wsCtlAfter) stage4.flushTrailing() else stage4
     stage5
   }
@@ -74,25 +77,8 @@ case class BlockHelper(
       case (fn, inv)                => (SBTemplate(inv.toList, options), SBTemplate(fn.toList, options))
     }.get
 
-  // Utility to see if a tag exists on the same line (only whitespace)
-  protected def aloneOnLine(rc: RenderControl, before: String, after: String): Boolean = {
-    val clearBefore = before.reverse.indexWhere(c => c == '\n' || !c.isWhitespace) match {
-      case -1                     => false
-      case i if before(i) == '\n' => true
-      case _                      => false
-    }
-    val clearAfter = after.indexWhere(c => c == '\n' || !c.isWhitespace) match {
-      case -1                    => false
-      case i if after(i) == '\n' => true
-      case _                     => false
-    }
-    (rc.isFirst && clearAfter) || (clearBefore && clearAfter) || (rc.isLast && clearBefore)
-  }
-
-  def setLast(last: Boolean): Renderable = this.copy(isLast = last)
-
   override def toString(): String = {
-    s"HelperTag $name ($helper)\n" +
+    s"BlockHelper $name ($helper)\n" +
       "  args: " + expr.args + "\n" +
       "  contents: \n" +
       body.body.map(_.toString).map(s => "    " + s).mkString("\n")

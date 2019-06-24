@@ -64,55 +64,166 @@ class NonblockSpacing() extends FunSpec with Matchers {
       }
     }
     describe("Block insertion (multi-line inline partial)") {
-      it("Normal") {
-        val t =
-          """{{#* inline "nombre"}}
-            |A
-            |  B -- {{name}}
-            |C
-            |{{/inline}}
-            |My name is:
-            |{{>nombre}}
-            |  Say it loud!""".stripMargin
-        sb.compile(t)(json) should be("""My name is:
-                                        |A
-                                        |  B -- Greg
-                                        |C
-                                        |  Say it loud!""".stripMargin)
-      }
-      it("No leading ws") {
-        val t =
-          """x{{#* inline "nombre"}}
-            |A
-            |  B -- {{name}}
-            |C
-            |{{/inline}}
-            |My name is:
-            |{{>nombre}}
-            |  Say it loud!""".stripMargin
-        println(sb.compile(t)(json))
-        sb.compile(t)(json) should be("""xMy name is:
-                                        |
-                                        |A
-                                        |  B -- Greg
-                                        |C
-                                        |  Say it loud!""".stripMargin)
-      }
-      it("No trailing ws") {
-        (pending)
-      }
-      it("No ws at all") {
-        (pending)
+      describe("Whitespace handling") {
+        it("Normal") {
+          val t =
+            """{{#* inline "nombre"}}
+              |A
+              |  B -- {{name}}
+              |C
+              |{{/inline}}
+              |My name is:
+              |{{>nombre}}
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """My name is:
+              |A
+              |  B -- Greg
+              |C
+              |  Say it loud!""".stripMargin)
+        }
+        it("No leading ws on open tag") {
+          val t =
+            """x{{#* inline "nombre"}}
+              |A
+              |  B -- {{name}}
+              |C
+              |{{/inline}}
+              |My name is:
+              |{{>nombre}}
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """xMy name is:
+              |
+              |A
+              |  B -- Greg
+              |C
+              |  Say it loud!""".stripMargin)
+        }
+        it("No leading ws on close tag") {
+          val t =
+            """{{#* inline "nombre"}}
+              |A
+              |  B -- {{name}}
+              |C
+              |x{{/inline}}
+              |My name is:
+              |{{>nombre}}
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """
+              |My name is:
+              |A
+              |  B -- Greg
+              |C
+              |x  Say it loud!""".stripMargin)
+        }
+        it("No trailing ws on open tag") {
+          val t =
+            """{{#* inline "nombre"}}x
+              |A
+              |  B -- {{name}}
+              |C
+              |{{/inline}}
+              |My name is:
+              |{{>nombre}}
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """My name is:
+              |x
+              |A
+              |  B -- Greg
+              |C
+              |  Say it loud!""".stripMargin)
+        }
+        it("No trailing ws on close tag") {
+          val t =
+            """{{#* inline "nombre"}}
+              |A
+              |  B -- {{name}}
+              |C
+              |{{/inline}}x
+              |My name is:
+              |{{>nombre}}
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """x
+              |My name is:
+              |A
+              |  B -- Greg
+              |C
+              |  Say it loud!""".stripMargin)
+        }
+        it("No ws at all (open/close)") {
+          val t =
+            """{{#* inline "nombre"}}A
+              |  B -- {{name}}
+              |C{{/inline}}
+              |My name is:
+              |{{>nombre}}
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """
+              |My name is:
+              |A
+              |  B -- Greg
+              |C  Say it loud!""".stripMargin)
+        }
+        it("No leading ws on > tag") {
+          val t =
+            """{{#* inline "nombre"}}
+              |A
+              |  B -- {{name}}
+              |C
+              |{{/inline}}
+              |My name is:
+              |x{{>nombre}}
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """My name is:
+              |xA
+              |  B -- Greg
+              |C
+              |
+              |  Say it loud!""".stripMargin)
+        }
+        it("No trailing ws on > tag") {
+          val t =
+            """{{#* inline "nombre"}}
+              |A
+              |  B -- {{name}}
+              |C
+              |{{/inline}}
+              |My name is:
+              |{{>nombre}}x
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """My name is:
+              |A
+              |  B -- Greg
+              |C
+              |x
+              |  Say it loud!""".stripMargin)
+        }
+        it("No ws at all on > tag") {
+          val t =
+            """{{#* inline "nombre"}}
+              |A
+              |  B -- {{name}}
+              |C
+              |{{/inline}}
+              |My name is:
+              |x{{>nombre}}y
+              |  Say it loud!""".stripMargin
+          sb.compile(t)(json) should be(
+            """My name is:
+              |xA
+              |  B -- Greg
+              |C
+              |y
+              |  Say it loud!""".stripMargin)
+        }
       }
     }
   }
 }
-
-/*
-My name is:
-
-A
-  B --
-C
-Say it loud!
- */ 

@@ -78,6 +78,11 @@ case class LongEvalResult(value: Long) extends EvalResult[Long]
 
 case class DoubleEvalResult(value: Double) extends EvalResult[Double]
 
+// A bit of a cheat here.  Alloss a Helper to "become" something else, essentially replacing its parent.
+// The mechanism is the Helper would return the new Renderable and the parent would render this instead of
+// itself.  Intended foremost for ParitalHelper.
+case class RenderableEvalResult(value: Renderable) extends EvalResult[Renderable]
+
 case class NoEvalResult() extends EvalResult[String] {
   val value = ""
 }

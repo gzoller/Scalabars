@@ -5,17 +5,9 @@ package renderables
 import org.json4s._
 
 case class InlinePartialTag(
-    nameArg:     Argument,
-    contents:    Seq[Renderable],
-    wsCtlBefore: Boolean,
-    wsCtlAfter:  Boolean,
-    wsAfter:     String
-) extends BlockTag {
-  val arity: Int = 0
-  val expr: ParsedExpression = null // CAREFUL!
-  val blockParams: Seq[String] = Nil
-
-  override def isBlock: Boolean = true
+    nameArg: Argument,
+    body:    Block
+) extends Renderable {
 
   /**
    * Render here does something different than normal.  It doesn't actually produce any output.  What it does produce
@@ -35,15 +27,13 @@ case class InlinePartialTag(
       case _ => None
     }).getOrElse(throw new BarsException("Inline partial's argument must evaluate to a string"))
 
-    val t = SBTemplate(contents.toList, rc.opts)
+    val t = SBTemplate(body.flatten.toList, rc.opts)
     val opt = rc.opts.copy(context = rc.opts.context.copy(partials = rc.opts.context.partials + (name -> t)))
-
-    val openTag = contents.head.asInstanceOf[OpenTagProxy]
-    val closeTag = contents.last.asInstanceOf[CloseTagProxy]
-    val stage1 = checkClipAndFlush(rc.reset(), openTag)
-    val stage2 = checkClipAndFlush(stage1, closeTag)
-    stage2.copy(opts = opt) // no change in content output
+    if (body.closeTag.aloneOnLine)
+      rc.reset().clipTrailing().copy(opts = opt)
+    else
+      rc.reset().copy(opts = opt)
   }
 
-  override def toString: String = s"InlinePartialTag(${contents.size})\n" + contents.map(_.toString).map(s => "    " + s).mkString("\n")
+  override def toString: String = s"InlinePartialTag(${body.body.size})\n" + body.body.map(_.toString).map(s => "    " + s).mkString("\n")
 }

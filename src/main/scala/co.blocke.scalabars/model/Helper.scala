@@ -70,5 +70,4 @@ abstract class Helper(argSymbols: String*) {
     options.context.lookup(prefixPath(basePath, incrementalPath))
 
   def addBlockParam(inBP: Map[String, Context], param: String, value: Context): Map[String, Context] = inBP + (param -> value)
-
 }

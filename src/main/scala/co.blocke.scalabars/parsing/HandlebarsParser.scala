@@ -5,6 +5,7 @@ import model._
 import renderables._
 import fastparse.NoWhitespace._
 import fastparse._
+import co.blocke.listzipper.mutable.ListZipper
 
 case class HandlebarsParser()(implicit val sb: Scalabars) {
 
@@ -71,9 +72,9 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
                 // rearrange body and whitespce (and wsCtl) for block (sew te block together to make it look/behave like a single, non-block tag)
                 //                val wsCtlSave = closeBlock.wsCtlAfter
                 val body = Block(
-                  OpenTag(stage3.expr, stage3.wsCtlBefore, stage3.wsCtlAfter, stage3.trailingWS.ws, stage3.arity),
+                  OpenTag(stage3.expr, stage3.wsCtlBefore, stage3.wsCtlAfter, stage3.leadingWS.ws.contains("\n"), stage3.arity),
                   stage3.trailingWS +: finalContents :+ ws3,
-                  closeBlock.copy(wsAfter = ws4.ws)
+                  closeBlock
                 )
                 stage3.copy(body       = body, trailingWS = ws4)
             }
@@ -87,7 +88,7 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
 
   private def closeBlock[_: P](arity: Int, label: String) =
     P("{".rep(arity) ~ spacesOrNL ~ wsctl.? ~ spacesOrNL ~ "/" ~ spacesOrNL ~ label ~ spacesOrNL ~ wsctl.? ~ spacesOrNL ~ "}".rep(arity))
-      .map { case (wcb, wca) => CloseTag(wcb.isDefined, wca.isDefined, "", arity) }
+      .map { case (wcb, wca) => CloseTag(wcb.isDefined, wca.isDefined, false, arity) }
 
   private def spaces[_: P] = P(CharsWhileIn(" \t", 0))
   private def spacesOrNL[_: P] = P(CharsWhileIn(" \t\n", 0))
@@ -171,7 +172,7 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
 
   //-----------------------------<< Compile!
 
-  def compile(input: String): List[Renderable] = {
+  def compile(input: String): Seq[Renderable] = {
     parse(input, template(_)) match {
       case Parsed.Success(value, _) => {
         val set = value.foldLeft(List.empty[Renderable]) {
@@ -180,12 +181,58 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
               case _: Text       => set :+ item
               case t: TagBuilder => set ++ t.finalize
             }
-        }.reverse
-        (set.head.setLast(true) +: set.tail).reverse
+        }
+        clean(set)
       }
       case f @ Parsed.Failure(label, index, extra) =>
-        println("BOOM: " + label + s"($index) " + extra)
         throw new BarsException("Template parsing failed: " + f.toString)
     }
+  }
+
+  private def clean(seq: Seq[Renderable]): Seq[Renderable] = {
+    val zipper = ListZipper(seq)
+    while (!zipper.crashedRight) {
+      if (zipper.focus.isDefined) zipper.focus.get match {
+        case _: Whitespace =>
+          zipper.mergeRightAs[Whitespace]((r1, r2) => Whitespace(r1.ws + r2.ws))
+
+        case bh: BlockHelper => // This is guaranteed to have WS before & after
+          val stage1 = bh.copy(body = bh.body.copy(body = clean(bh.body.body)))
+
+          // Open tag alone on line?
+          val clearAfter = stage1.body.body.head.asInstanceOf[Whitespace].ws.contains("\n")
+          val clearBefore = zipper.index == 1 || zipper.prevAs[Whitespace].flatMap(ws => if (ws.ws.contains("\n")) Some(ws) else None).isDefined
+          val stage2 = stage1.copy(body = stage1.body.copy(openTag = stage1.body.openTag.copy(aloneOnLine = clearBefore && clearAfter)))
+
+          // Close tag alone on line?
+          val clearBefore2 = stage2.body.body.last.asInstanceOf[Whitespace].ws.contains("\n")
+          val clearAfter2 = zipper.nextAs[Whitespace].flatMap(ws => if (ws.ws.contains("\n")) Some(ws) else None).isDefined
+          val stage3 = stage2.copy(body = stage2.body.copy(closeTag = stage2.body.closeTag.copy(aloneOnLine = clearBefore2 && clearAfter2)))
+          zipper.modify(stage3)
+
+        case bh: InlinePartialTag =>
+          val stage1 = bh.copy(body = bh.body.copy(body = clean(bh.body.body)))
+
+          // Open tag alone on line?
+          val clearAfter = stage1.body.body.head.asInstanceOf[Whitespace].ws.contains("\n")
+          val clearBefore = zipper.index == 1 || zipper.prevAs[Whitespace].flatMap(ws => if (ws.ws.contains("\n")) Some(ws) else None).isDefined
+          val stage2 = stage1.copy(body = stage1.body.copy(openTag = stage1.body.openTag.copy(aloneOnLine = clearBefore && clearAfter)))
+
+          // Close tag alone on line?
+          val clearBefore2 = stage2.body.body.last.asInstanceOf[Whitespace].ws.contains("\n")
+          val clearAfter2 = zipper.nextAs[Whitespace].flatMap(ws => if (ws.ws.contains("\n")) Some(ws) else None).isDefined
+          val stage3 = stage2.copy(body = stage2.body.copy(closeTag = stage2.body.closeTag.copy(aloneOnLine = clearBefore2 && clearAfter2)))
+          zipper.modify(stage3)
+
+        case ht: HelperTag =>
+          val clearBefore = zipper.prevAs[Whitespace].flatMap(ws => if (ws.ws.contains("\n")) Some(ws) else None).isDefined
+          val clearAfter = zipper.nextAs[Whitespace].flatMap(ws => if (ws.ws.contains("\n")) Some(ws) else None).isDefined
+          zipper.modify(ht.copy(aloneOnLine = clearBefore && clearAfter))
+
+        case _ => // do nothing
+      }
+      zipper.moveRight
+    }
+    zipper.toList
   }
 }

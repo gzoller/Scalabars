@@ -19,7 +19,7 @@ val graalvm      = "org.graalvm.sdk"    % "graal-sdk"       % graalversion
 val graaljs      = "org.graalvm.js"     % "js-scriptengine" % graalversion
 val graaljs2     = "org.graalvm.js"     % "js"              % graalversion
 val markdown     = "com.vladsch.flexmark" % "flexmark-all"  % "0.42.6"
-val zipper       = "io.github.stanch"   %% "zipper"         % "0.5.2"
+val zipper       = "co.blocke"          %% "listzipper"     % "0.1.2"
 
 val basicSettings = Seq(
   coverageMinimum             := 92,  // really this should be 96% but mongo isn't quite up to that yet
@@ -39,5 +39,5 @@ lazy val root = (project in file("."))
   .settings(basicSettings: _*)
   .settings(
     name := "scalabars",
-    libraryDependencies ++= Seq(fastparse, commonsText, scalajack, graalvm, graaljs, graaljs2, json4s, json4sNative, markdown, scalaTest % Test)
+    libraryDependencies ++= Seq(fastparse, zipper, commonsText, scalajack, graalvm, graaljs, graaljs2, json4s, json4sNative, markdown, scalaTest % Test)
   )

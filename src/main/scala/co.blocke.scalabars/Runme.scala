@@ -32,7 +32,8 @@ object Runme extends App {
       |}
     """.stripMargin)
 
-  /*
+  // @formatter:off
+
   val t =
     """{{#* inline "nombre"}}
       |A
@@ -43,15 +44,17 @@ object Runme extends App {
       |{{>nombre}}
       |  Say it loud!""".stripMargin
 
-   */
-
-  val t =
+  val t2 =
     """{{# name}}
-      |What'cha {{this}} doin?
-      |{{/name}}
-      |Done""".stripMargin
+        |What'cha {{this}} doin?
+        |{{/name}}
+        |Done""".stripMargin
+  // @formatter:on
 
   println(sb.compile(t)(json))
+  println("-----")
+  //  println(sb.compile(t2)(json))
+  //  println("-----")
 
 }
 

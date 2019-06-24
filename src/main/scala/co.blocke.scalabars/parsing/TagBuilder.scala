@@ -16,26 +16,16 @@ case class TagBuilder(
     trailingWS:  Whitespace       = Whitespace("")
 ) extends Renderable {
 
-  val isLast: Boolean = false
-  def setLast(last: Boolean): Renderable = this
-
   def render(rc: RenderControl): RenderControl = rc // will never be called... here to make parsing easier
   def isBlock: Boolean = ctl.isDefined && List("#", "#*", "^", "#>").contains(ctl.get)
 
   // Break out whitespace and convert this builder into a final Tag based on its type
   def finalize(implicit sb: Scalabars): List[Renderable] = {
     val finalTag = ctl match {
-      /*
       case Some("#*") =>
-        val unpackedBody = contents.foldLeft(Seq.empty[Renderable]) {
-          case (seq, item) =>
-            item match {
-              case tb: TagBuilder => seq ++ tb.finalize
-              case r              => seq :+ r
-            }
-        }
-        InlinePartialTag(expr.args.head, unpackedBody, wsCtlBefore, wsCtlAfter, trailingWS.ws) // inline partial
-      case Some(">") | Some("#>") =>
+        InlinePartialTag(expr.args.head, body) // inline partial
+
+      case Some(">") =>
         expr.exprArg match {
           // Sub-expression (expression in 1st position).  Create an ExpressionTag
           case Some(e) => ??? // TODO
@@ -43,16 +33,45 @@ case class TagBuilder(
           case None =>
             val partialHelper = sb.getPartial(expr.name) match {
               case Some(ph) => ph
-              case None if isBlock =>
-                // Partial not found, but fall-through block provided, so render that.
-                PartialHelper(expr.name, sb._compileFromContents(contents))
-              case None =>
-                // Nothing found... this might be bad, or it may be a reference to an inline partial.  Won't know until render-time
+              case None => // Nothing found... this might be bad, or it may be a reference to an inline partial.  Won't know until render-time
                 PartialHelper(expr.name, EmptyTemplate())
             }
-            HelperTag(expr.name, partialHelper, isInverted = false, 3, wsCtlBefore, wsCtlAfter, expr, blockParams, contents, trailingWS.ws)
+            val helperTag = HelperTag(expr.name, partialHelper, expr, wsCtlBefore, wsCtlAfter, 3)
+            helperTag.helper.asInstanceOf[PartialHelper].setParent(helperTag)
+            helperTag
         }
-        */
+
+      /*
+
+case class HelperTag(
+    nameOrPath:  String,
+    helper:      Helper,
+    expr:        ParsedExpression, // "guts" of the tag (e.g. label, arguments)
+    wsCtlBefore: Boolean,
+    wsCtlAfter:  Boolean,
+    wsAfter:     String, // used to determine if tag is alone on line
+    arity:       Int,
+    isLast:      Boolean          = false
+)
+
+          case Some(">") | Some("#>") =>
+            expr.exprArg match {
+              // Sub-expression (expression in 1st position).  Create an ExpressionTag
+              case Some(e) => ??? // TODO
+              // Non-expression tag.  Use expr.name and build the PartialTag
+              case None =>
+                val partialHelper = sb.getPartial(expr.name) match {
+                  case Some(ph) => ph
+                  case None if isBlock =>
+                    // Partial not found, but fall-through block provided, so render that.
+                    PartialHelper(expr.name, sb._compileFromContents(body.flatten))
+                  case None =>
+                    // Nothing found... this might be bad, or it may be a reference to an inline partial.  Won't know until render-time
+                    PartialHelper(expr.name, EmptyTemplate())
+                }
+                HelperTag(expr.name, partialHelper, isInverted = false, 3, wsCtlBefore, wsCtlAfter, expr, blockParams, contents, trailingWS.ws)
+             */
+
       case Some("#") => // Blocks
         expr.exprArg match {
           // Sub-expression (expression in 1st position).  Create an ExpressionTag
@@ -63,18 +82,20 @@ case class TagBuilder(
             BlockHelper(expr.name, helper, isInverted = false, expr, arity, blockParams, body)
 
         }
+
       case Some("^") => // Inverted Helper (fn & inverse are reversed, but otherwise the same as normal Helper)
         expr.exprArg match {
           // Sub-expression (expression in 1st position).  Create an ExpressionTag
           case Some(e) => ??? // TODO
           // Non-expression tag.  Use expr.name and build the HelperTag
-          case None    =>
+          case None =>
             val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name))
             BlockHelper(expr.name, helper, isInverted = true, expr, arity, blockParams, body)
         }
+
       case _ =>
         val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name)) // resolve to either known non-block helper, or fall back to assuming its a path
-        HelperTag(expr.name, helper, expr, wsCtlBefore, wsCtlAfter, trailingWS.ws, arity)
+        HelperTag(expr.name, helper, expr, wsCtlBefore, wsCtlAfter, arity)
     }
     List(leadingWS, finalTag, trailingWS)
   }

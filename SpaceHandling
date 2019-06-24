@@ -67,3 +67,6 @@ My name is:
 
 It seems (2) ws is controlled by (2) || (5)
 
+>>>> More spacing:  Iff #* tag is not clear before, render as-is, including any \n after the tag (after (2))
+If #* tag is clear, then clip trailing ws to \n after the tag
+

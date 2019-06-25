@@ -128,14 +128,129 @@ class BlockSpacing() extends FunSpec with Matchers {
                                                     |Done""".stripMargin)
       }
     }
+    describe("Block Partial -- default block") {
+      it("Normal") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B -- {{name}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>bogus}}
+            |Content here
+            |{{/bogus}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |Content here
+                                        |  Say it loud!""".stripMargin)
+      }
+      it("No whitespace at all in block") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B -- {{name}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>bogus}}Content here{{/bogus}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |Content here
+                                        |  Say it loud!""".stripMargin)
+      }
+      it("No whitespace before") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B -- {{name}}
+            |C
+            |{{/inline}}
+            |My name is:{{#>bogus}}
+            |Content here
+            |{{/bogus}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |Content here
+                                        |  Say it loud!""".stripMargin)
+      }
+      it("No whitespace after") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B -- {{name}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>bogus}}
+            |Content here
+            |{{/bogus}}  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |Content here
+                                        |  Say it loud!""".stripMargin)
+      }
+      it("ws ctl before open") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B -- {{name}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{~#>bogus}}
+            |Content here
+            |{{/bogus}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:Content here
+                                        |  Say it loud!""".stripMargin)
+      }
+      it("ws ctl after open") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B -- {{name}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>bogus~}}
+            |Content here
+            |{{/bogus}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |Content here
+                                        |  Say it loud!""".stripMargin)
+      }
+      it("ws ctl before close") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B -- {{name}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>bogus}}
+            |Content here
+            |{{~/bogus}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |Content here  Say it loud!""".stripMargin)
+      }
+      it("ws ctl after close") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B -- {{name}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>bogus}}
+            |Content here
+            |{{/bogus~}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |Content here
+                                        |Say it loud!""".stripMargin)
+      }
+    }
   }
 }
-
-/*
-My name is:
-
-A
-  B --
-C
-Say it loud!
- */ 

@@ -10,7 +10,7 @@ ThisBuild / organizationName := "example"
 
 val graalversion = "1.0.0-rc16"
 
-val fastparse    = "com.lihaoyi"        %% "fastparse"      % "2.1.2"
+val fastparse    = "com.lihaoyi"        %% "fastparse"      % "2.1.3"
 val commonsText  = "org.apache.commons" % "commons-text"    % "1.6"
 val json4s       = "org.json4s"         %% "json4s-core"    % "3.6.5"
 val json4sNative = "org.json4s"         %% "json4s-native"  % "3.6.5"

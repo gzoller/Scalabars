@@ -118,10 +118,9 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
   def text(implicit ctx: P[_]): P[Text] = {
     val start = ctx.index
 
-    if (start >= ctx.input.length - 2)
+    if (start == ctx.input.length)
       ctx.freshFailure()
     else {
-      // Returns: (pos, end of input?)
       def findDoubleBrace(idx: Int): Option[Int] =
         findSingleBrace(idx).flatMap { b =>
           findSingleBrace(b + 1) match {
@@ -155,6 +154,7 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
           ctx.freshSuccess(Text(ctx.input.slice(start, ctx.input.length)), ctx.input.length) // take rest of string...no "{{" found
       }
     }
+    //    }
   }
 
   // Grab whitespace until end-of-input or '{{'
@@ -208,7 +208,12 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
           val clearBefore2 = stage2.body.body.last.asInstanceOf[Whitespace].ws.contains("\n")
           val clearAfter2 = zipper.nextAs[Whitespace].flatMap(ws => if (ws.ws.contains("\n")) Some(ws) else None).isDefined
           val stage3 = stage2.copy(body = stage2.body.copy(closeTag = stage2.body.closeTag.copy(aloneOnLine = clearBefore2 && clearAfter2)))
-          zipper.modify(stage3)
+
+          val stage4 = stage3.helper match {
+            case ph: PartialHelper => stage3.copy(helper = ph.setParent(stage3))
+            case _                 => stage3
+          }
+          zipper.modify(stage4)
 
         case bh: InlinePartialTag =>
           val stage1 = bh.copy(body = bh.body.copy(body = clean(bh.body.body)))
@@ -227,7 +232,11 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
         case ht: HelperTag =>
           val clearBefore = zipper.prevAs[Whitespace].flatMap(ws => if (ws.ws.contains("\n")) Some(ws) else None).isDefined
           val clearAfter = zipper.nextAs[Whitespace].flatMap(ws => if (ws.ws.contains("\n")) Some(ws) else None).isDefined
-          zipper.modify(ht.copy(aloneOnLine = clearBefore && clearAfter))
+          val helper = ht.helper match {
+            case ph: PartialHelper => ph.setParent(ht)
+            case ph                => ph
+          }
+          zipper.modify(ht.copy(helper      = helper, aloneOnLine = clearBefore && clearAfter))
 
         case _ => // do nothing
       }

@@ -41,18 +41,18 @@ object Runme extends App {
  |C
  |{{/inline}}
  |My name is:
- |{{~>nombre}}
+ |{{#>bogus}}
+ |Content here
+ |{{/bogus}}
  |  Say it loud!""".stripMargin
 
-  //  val t2 =
-  //    """{{# name}}
-  //        |What'cha {{this}} doin?
-  //        |{{/name}}
-  //        |Done""".stripMargin
   // @formatter:on
 
   println(sb.compile(t)(json))
   println("-----")
+
+  //  val t2 = """{{# name}}What'cha {{this}} doin?{{/name}}
+  //             |Done""".stripMargin
   //  println(sb.compile(t2)(json))
   //  println("-----")
 

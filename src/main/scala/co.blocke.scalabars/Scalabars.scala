@@ -1,6 +1,7 @@
 package co.blocke.scalabars
 
 import model._
+import renderables._
 import parsing._
 import org.graalvm.polyglot.{ Context => JSContext }
 
@@ -80,12 +81,11 @@ case class Scalabars(
 
   //  def registerHelper(name: String, helperJS: String): Scalabars = this.copy(helpers = helpers + (name -> JSHelper(name, helperJS)))
   def registerHelper(name: String, helper: Helper): Scalabars = this.copy(helpers = helpers + (name -> helper))
-  /*
   def registerPartial(name: String, script: String): Scalabars = {
-    partials.put(name, PartialHelper(name, compile(script)))
+    val template = compile(script)
+    partials.put(name, PartialHelper(name, template.copy(compiled = OpenTag(ParsedExpression(name), false, false, false, 3) +: template.compiled :+ CloseTag(false, false, false, 3))))
     this
   }
-  */
 
   // Used for inline partialss
   //  private[scalabars] def registerPartial(name: String, contents: List[Renderable]) =

@@ -25,7 +25,7 @@ case class TagBuilder(
       case Some("#*") =>
         InlinePartialTag(expr.args.head, body) // inline partial
 
-      case Some(">") =>
+      case Some(">") | Some("#>") =>
         expr.exprArg match {
           // Sub-expression (expression in 1st position).  Create an ExpressionTag
           case Some(e) => ??? // TODO: subexpression
@@ -33,44 +33,16 @@ case class TagBuilder(
           case None =>
             val partialHelper = sb.getPartial(expr.name) match {
               case Some(ph) => ph
+              case None if isBlock => // Nothing found... fall-thru block provided, so render that
+                PartialHelper(expr.name, sb._compileFromContents(body.flatten))
               case None => // Nothing found... this might be bad, or it may be a reference to an inline partial.  Won't know until render-time
                 PartialHelper(expr.name, EmptyTemplate())
             }
-            val helperTag = HelperTag(expr.name, partialHelper, expr, wsCtlBefore, wsCtlAfter, 3)
-            helperTag.helper.asInstanceOf[PartialHelper].setParent(helperTag)
-            helperTag
+            if (isBlock)
+              BlockHelper(expr.name, partialHelper, isInverted = false, expr, 3, blockParams, body)
+            else
+              HelperTag(expr.name, partialHelper, expr, wsCtlBefore, wsCtlAfter, 3)
         }
-
-      /*
-
-case class HelperTag(
-    nameOrPath:  String,
-    helper:      Helper,
-    expr:        ParsedExpression, // "guts" of the tag (e.g. label, arguments)
-    wsCtlBefore: Boolean,
-    wsCtlAfter:  Boolean,
-    wsAfter:     String, // used to determine if tag is alone on line
-    arity:       Int,
-    isLast:      Boolean          = false
-)
-
-          case Some(">") | Some("#>") =>
-            expr.exprArg match {
-              // Sub-expression (expression in 1st position).  Create an ExpressionTag
-              case Some(e) => ??? // TODO
-              // Non-expression tag.  Use expr.name and build the PartialTag
-              case None =>
-                val partialHelper = sb.getPartial(expr.name) match {
-                  case Some(ph) => ph
-                  case None if isBlock =>
-                    // Partial not found, but fall-through block provided, so render that.
-                    PartialHelper(expr.name, sb._compileFromContents(body.flatten))
-                  case None =>
-                    // Nothing found... this might be bad, or it may be a reference to an inline partial.  Won't know until render-time
-                    PartialHelper(expr.name, EmptyTemplate())
-                }
-                HelperTag(expr.name, partialHelper, isInverted = false, 3, wsCtlBefore, wsCtlAfter, expr, blockParams, contents, trailingWS.ws)
-             */
 
       case Some("#") => // Blocks
         expr.exprArg match {

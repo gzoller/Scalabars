@@ -328,5 +328,69 @@ class NonblockSpacing() extends FunSpec with Matchers {
         }
       }
     }
+    describe("Registered Partial") {
+      it("Normal") {
+        val t =
+          """My name is:
+            |{{>nombre}}
+            |  Say it loud!""".stripMargin
+        sb.registerPartial("nombre", """A
+                                      |  B -- {{name}}
+                                      |C""".stripMargin).compile(t)(json) should be(
+          """My name is:
+            |A
+            |  B -- Greg
+            |C  Say it loud!""".stripMargin)
+      }
+      it("No ws before > tag") {
+        val t =
+          """My name is:{{>nombre}}
+            |  Say it loud!""".stripMargin
+        sb.registerPartial("nombre", """A
+                                      |  B -- {{name}}
+                                      |C""".stripMargin).compile(t)(json) should be(
+          """My name is:A
+            |  B -- Greg
+            |C
+            |  Say it loud!""".stripMargin)
+      }
+      it("No ws after > tag") {
+        val t =
+          """My name is:
+            |{{>nombre}}Say it loud!""".stripMargin
+        sb.registerPartial("nombre", """A
+                                      |  B -- {{name}}
+                                      |C""".stripMargin).compile(t)(json) should be(
+          """My name is:
+            |A
+            |  B -- Greg
+            |CSay it loud!""".stripMargin)
+      }
+      it("ws ctl before > tag") {
+        val t =
+          """My name is:
+            |{{~>nombre}}
+            |  Say it loud!""".stripMargin
+        sb.registerPartial("nombre", """A
+                                       |  B -- {{name}}
+                                       |C""".stripMargin).compile(t)(json) should be(
+          """My name is:A
+            |  B -- Greg
+            |C  Say it loud!""".stripMargin)
+      }
+      it("ws ctl after > tag") {
+        val t =
+          """My name is:
+            |{{>nombre~}}
+            |  Say it loud!""".stripMargin
+        sb.registerPartial("nombre", """A
+                                       |  B -- {{name}}
+                                       |C""".stripMargin).compile(t)(json) should be(
+          """My name is:
+            |A
+            |  B -- Greg
+            |CSay it loud!""".stripMargin)
+      }
+    }
   }
 }

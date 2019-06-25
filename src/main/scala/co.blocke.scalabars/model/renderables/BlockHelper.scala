@@ -14,18 +14,23 @@ case class BlockHelper(
 
   def render(rc: RenderControl): RenderControl = {
     implicit val escapeOpts: Options = rc.opts.copy(_hash = rc.opts._hash + ("noEscape" -> BooleanEvalResult(true)))
-    val raw: String = eval(escapeOpts)
-    val wsTws = sliceToRenderables(raw)
+    eval(escapeOpts) match {
+      case r: RenderableEvalResult => // Hey!  We've become something else (PartialHelper)
+        r.value.render(rc)
+      case e =>
+        val raw: String = e
+        val wsTws = sliceToRenderables(raw)
 
-    val stage1 = if (body.openTag.aloneOnLine) rc.clipLeading().clipTrailing() else rc
-    val stage2 = if (body.openTag.wsCtlBefore) stage1.flushLeading() else stage1
-    val stage3 = wsTws.foldLeft(stage2) {
-      case (rcX, renderable) =>
-        renderable.render(rcX)
+        val stage1 = if (body.openTag.aloneOnLine) rc.clipLeading().clipTrailing() else rc
+        val stage2 = if (body.openTag.wsCtlBefore) stage1.flushLeading() else stage1
+        val stage3 = wsTws.foldLeft(stage2) {
+          case (rcX, renderable) =>
+            renderable.render(rcX)
+        }
+        val stage4 = if (body.closeTag.aloneOnLine) stage3.clipLeading().clipTrailing() else stage3
+        val stage5 = if (body.closeTag.wsCtlAfter) stage4.flushTrailing() else stage4
+        stage5
     }
-    val stage4 = if (body.closeTag.aloneOnLine) stage3.clipLeading().clipTrailing() else stage3
-    val stage5 = if (body.closeTag.wsCtlAfter) stage4.flushTrailing() else stage4
-    stage5
   }
 
   def eval(options: Options): EvalResult[_] = helper.run()(bakeBlockOptions(options), Map.empty[String, Template])

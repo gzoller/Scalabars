@@ -7,7 +7,10 @@ import renderables._
 case class PartialHelper(name: String, t: Template, firstPass: Boolean = true) extends Helper("givenContext") {
 
   private var parent: Option[Renderable] = None
-  def setParent(p: Renderable) = parent = Some(p)
+  def setParent(p: Renderable) = {
+    parent = Some(p)
+    this
+  }
 
   // PartialHelper is complex.  It uses a 2-pass system.  First pass, resolve the template and "become" a BlockHelper (i.e. replace the parent with
   // a BlockHelper holding the partial template.  Then circle 'round and do it again, this time actually replacing the content.
@@ -23,7 +26,8 @@ case class PartialHelper(name: String, t: Template, firstPass: Boolean = true) e
         case ht: HelperTag =>
           RenderableEvalResult(BlockHelper(name, this.copy(firstPass = false), false, ht.expr, ht.arity, Seq.empty[String], Block(template).get))
 
-        case bt: BlockHelper => ??? // TODO: Block partial tag
+        case bt: BlockHelper =>
+          RenderableEvalResult(bt.copy(helper = this.copy(firstPass = false)))
       }
     } else {
       // 2nd Pass
@@ -35,7 +39,7 @@ case class PartialHelper(name: String, t: Template, firstPass: Boolean = true) e
           c
       }
 
-      // NOTE: In Handlebars, AssignmentArguments are merged with the context, not accessed via options.hash, like they are in normal helpers.
+      // NOTE: In Handlebars, AssignmentArguments are merged with the context for partials, not accessed via options.hash, like they are in normal helpers.
       // Therefore, dump hash contents into context before rendering...
       //
       // Unless.... explicitPartialContext is set to true, in which case *only* AssignmentArguments are visible in the partial.  The current

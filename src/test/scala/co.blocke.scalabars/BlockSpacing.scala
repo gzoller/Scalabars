@@ -252,5 +252,99 @@ class BlockSpacing() extends FunSpec with Matchers {
                                         |Say it loud!""".stripMargin)
       }
     }
+    describe("Block Partial -- @partial-block") {
+      it("normal") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B --
+            |  {{@partial-block}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>nombre}}
+            |Content here
+            |{{/nombre}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --
+                                        |  Content here
+                                        |
+                                        |C
+                                        |  Say it loud!""".stripMargin)
+      }
+      it("no ws before > open tag") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B --
+            |  {{@partial-block}}
+            |C
+            |{{/inline}}
+            |My name is:{{#>nombre}}
+            |Content here
+            |{{/nombre}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:A
+                                        |  B --
+                                        |
+                                        |Content here
+                                        |
+                                        |C
+                                        |  Say it loud!""".stripMargin)
+      }
+      it("no ws after > open tag") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B --
+            |  {{@partial-block}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>nombre}}Content here
+            |{{/nombre}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --
+                                        |  Content here
+                                        |
+                                        |C
+                                        |  Say it loud!""".stripMargin)
+      }
+      it("no ws before > close tag") {
+        pending
+      }
+      it("no ws after > close tag") {
+        pending
+      }
+      it("no ws before @ tag") {
+        pending
+      }
+      it("no ws after @ tag") {
+        pending
+      }
+
+      it("ws ctl before > open tag") {
+        pending
+      }
+      it("ws ctl after > open tag") {
+        pending
+      }
+      it("ws ctl before > close tag") {
+        pending
+      }
+      it("ws ctl after > close tag") {
+        pending
+      }
+      it("ws ctl before @ tag") {
+        pending
+      }
+      it("ws ctl after @ tag") {
+        pending
+      }
+    }
   }
 }

@@ -33,8 +33,6 @@ case class TagBuilder(
           case None =>
             val partialHelper = sb.getPartial(expr.name) match {
               case Some(ph) => ph
-              case None if isBlock => // Nothing found... fall-thru block provided, so render that
-                PartialHelper(expr.name, sb._compileFromContents(body.flatten))
               case None => // Nothing found... this might be bad, or it may be a reference to an inline partial.  Won't know until render-time
                 PartialHelper(expr.name, EmptyTemplate())
             }

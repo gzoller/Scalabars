@@ -36,15 +36,16 @@ object Runme extends App {
 
   val t =
     """{{#* inline "nombre"}}
- |A
- |  B -- {{name}}
- |C
- |{{/inline}}
- |My name is:
- |{{#>bogus}}
- |Content here
- |{{/bogus}}
- |  Say it loud!""".stripMargin
+            |A
+            |  B --
+            |  {{@partial-block}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>nombre}}
+            |Content here
+            |{{/nombre}}
+            |  Say it loud!""".stripMargin
 
   // @formatter:on
 

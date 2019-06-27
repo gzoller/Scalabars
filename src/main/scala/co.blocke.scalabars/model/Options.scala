@@ -27,14 +27,16 @@ case class Options(
 
   def fn(): String = fn(context, Map.empty[String, EvalResult[_]], Map.empty[String, Context])
   def fn(c: Context): String = fn(c, Map.empty[String, EvalResult[_]], Map.empty[String, Context])
-  def fn(c: Context, data: Map[String, EvalResult[_]]): String = fn(c, data, Map.empty[String, Context])
+  def fn(c: Context, data: Map[String, EvalResult[_]]): String =
+    fn(c, data, Map.empty[String, Context])
   def fn(
       c:           Context,
       data:        Map[String, EvalResult[_]],
       blockParams: Map[String, Context]
   ): String = {
-    val raw = _fn.render(c.copy(data        = data, blockParams = c.blockParams ++ blockParams))
-    accumulator(raw, this)
+    _fn.render(c.copy(data        = data, blockParams = c.blockParams ++ blockParams))
+    //    val raw = _fn.render(c.copy(data        = data, blockParams = c.blockParams ++ blockParams))
+    //    accumulator(raw, this)
   }
 
   def inverse(): String = _inverse.render(context)
@@ -43,15 +45,16 @@ case class Options(
   // $COVERAGE-ON$
 
   def isFalsy(er: EvalResult[_]): Boolean = er match {
-    case c: ContextEvalResult => c.value.value match {
-      case b: JBool         => !b.value
-      case JNothing         => true
-      case a: JArray        => a.arr.isEmpty
-      case o: JObject       => o.children.isEmpty
-      case JString("false") => true
-      case null             => true
-      case _                => false
-    }
+    case c: ContextEvalResult =>
+      c.value.value match {
+        case b: JBool         => !b.value
+        case JNothing         => true
+        case a: JArray        => a.arr.isEmpty
+        case o: JObject       => o.children.isEmpty
+        case JString("false") => true
+        case null             => true
+        case _                => false
+      }
     case StringEvalResult("false") => true
     case BooleanEvalResult(false)  => true
     case NoEvalResult()            => true

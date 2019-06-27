@@ -5,7 +5,12 @@ import org.json4s._
 import renderables._
 
 // t is defined only for registerd partials.  Inline partials are EmptyTemplate for t
-case class PartialHelper(name: String, t: Template, firstPass: Boolean = true, isPartialBlock: Boolean = false) extends Helper("givenContext") {
+case class PartialHelper(
+    name:           String,
+    t:              Template,
+    firstPass:      Boolean  = true,
+    isPartialBlock: Boolean  = false)
+  extends Helper("givenContext") {
 
   private var parent: Option[Renderable] = None
   def setParent(p: Renderable) = {
@@ -23,14 +28,27 @@ case class PartialHelper(name: String, t: Template, firstPass: Boolean = true, i
             case EmptyTemplate() =>
               // If template is empty it means we presume this is a ref to an inline template (stored in context).  Let's go find it...
               // If not found.... error.  This isn't a block, so there's no default thing to render, so go boom.
-              options.context.partials.getOrElse(name, throw new BarsException(s"No partial named '${name}' registered"))
+              options.context.partials
+                .getOrElse(name, throw new BarsException(s"No partial named '${name}' registered"))
             case _ => t
           }
-          RenderableEvalResult(BlockHelper(name, this.copy(firstPass = false), false, ht.expr, ht.arity, Seq.empty[String], Block(template).get))
+          RenderableEvalResult(
+            BlockHelper(
+              name,
+              this.copy(firstPass = false),
+              false,
+              ht.expr,
+              ht.arity,
+              Seq.empty[String],
+              Block(template).get))
 
         case bt: BlockHelper =>
           // NOTE: At this point template 't' may be EmptyTemplate.  This is OK for a BlockHelper.  It will be resolved in 2nd pass
-          RenderableEvalResult(bt.copy(helper = this.copy(firstPass      = false, isPartialBlock = options.context.partials.get(name).isDefined)))
+          RenderableEvalResult(
+            bt.copy(
+              helper = this.copy(
+                firstPass      = false,
+                isPartialBlock = options.context.partials.get(name).isDefined)))
       }
     } else {
       // 2nd Pass
@@ -67,7 +85,8 @@ case class PartialHelper(name: String, t: Template, firstPass: Boolean = true, i
           partialContextCandidate.value match {
             case jo: JObject =>
               partialContextCandidate.copy(value = Merge.merge(jo, new JObject(getHashContents())))
-            case _ => partialContextCandidate // not an object context... not much we can do about assignments
+            case _ =>
+              partialContextCandidate // not an object context... not much we can do about assignments
           }
 
       if (isPartialBlock) {

@@ -10,30 +10,27 @@ case class BlockHelper(
     arity:       Int,
     blockParams: Seq[String],
     body:        Block
-) extends Renderable with Evalable with HelperTagCommon {
+) extends Renderable
+  with Evalable
+  with HelperTagCommon {
 
   def render(rc: RenderControl): RenderControl = {
-    implicit val escapeOpts: Options = rc.opts.copy(_hash = rc.opts._hash + ("noEscape" -> BooleanEvalResult(true)))
+    implicit val escapeOpts: Options =
+      rc.opts.copy(_hash = rc.opts._hash + ("noEscape" -> BooleanEvalResult(true)))
     eval(escapeOpts) match {
       case r: RenderableEvalResult => // Hey!  We've become something else (PartialHelper)
+        //        if (body.openTag.wsCtlBefore)
+        //          r.value.render(rc.flushTrailing()) // oddment of partial wiring
+        //        else
         r.value.render(rc)
       case e =>
         val raw: String = e
-        val wsTws = sliceToRenderables(raw)
-
-        val stage1 = if (body.openTag.aloneOnLine) rc.clipLeading().clipTrailing() else rc
-        val stage2 = if (body.openTag.wsCtlBefore) stage1.flushLeading() else stage1
-        val stage3 = wsTws.foldLeft(stage2) {
-          case (rcX, renderable) =>
-            renderable.render(rcX)
-        }
-        val stage4 = if (body.closeTag.aloneOnLine) stage3.clipLeading().clipTrailing() else stage3
-        val stage5 = if (body.closeTag.wsCtlAfter) stage4.flushTrailing() else stage4
-        stage5
+        rc.addText(raw)
     }
   }
 
-  def eval(options: Options): EvalResult[_] = helper.run()(bakeBlockOptions(options), Map.empty[String, Template])
+  def eval(options: Options): EvalResult[_] =
+    helper.run()(bakeBlockOptions(options), Map.empty[String, Template])
 
   // Blocks render their content bodies by calling options.fn().  Worse... the code of the helper may iterate, calling fn()
   // multiple times.  Whitespace must be managed each time, meaning we need to lift from the Helper.run() back up to the BlockHelperTag
@@ -64,23 +61,28 @@ case class BlockHelper(
   }
 
   private def examineBlock(options: Options): (Template, Template) =
-    body.body.zipWithIndex.collectFirst {
-      case (elseTag: BlockHelper, i) if elseTag.name == "else" =>
-        val (fnT, invT) = body.body.splitAt(i)
+    body.body.zipWithIndex
+      .collectFirst {
+        case (elseTag: BlockHelper, i) if elseTag.name == "else" =>
+          val (fnT, invT) = body.body.splitAt(i)
 
-        // Unpack Else to see if there's an embedded 'if'.  If so... convert the Else into an If helper and add to _inverted
-        if (elseTag.expr.args.nonEmpty) {
-          val newIf = elseTag.copy(
-            expr = ParsedExpression(elseTag.expr.args.head.value, elseTag.expr.args.tail),
-            body = body.copy(openTag = body.openTag.copy(expr = expr), body = invT.tail.toList)
-          )
-          (fnT, Seq(newIf))
-        } else
-          (body.openTag +: fnT :+ body.closeTag, body.openTag +: invT :+ body.closeTag)
-    }.orElse(Some(body.body, Seq.empty[Renderable])).map {
-      case (fn, inv) if !isInverted => (SBTemplate(fn.toList, options), SBTemplate(inv.toList, options))
-      case (fn, inv)                => (SBTemplate(inv.toList, options), SBTemplate(fn.toList, options))
-    }.get
+          // Unpack Else to see if there's an embedded 'if'.  If so... convert the Else into an If helper and add to _inverted
+          if (elseTag.expr.args.nonEmpty) {
+            val newIf = elseTag.copy(
+              expr = ParsedExpression(elseTag.expr.args.head.value, elseTag.expr.args.tail),
+              body = body.copy(openTag = body.openTag.copy(expr = expr), body = invT.tail.toList)
+            )
+            (fnT, Seq(newIf))
+          } else
+            (body.openTag +: fnT :+ body.closeTag, body.openTag +: invT :+ body.closeTag)
+      }
+      .orElse(Some(body.body, Seq.empty[Renderable]))
+      .map {
+        case (fn, inv) if !isInverted =>
+          (SBTemplate(fn.toList, options), SBTemplate(inv.toList, options))
+        case (fn, inv) => (SBTemplate(inv.toList, options), SBTemplate(fn.toList, options))
+      }
+      .get
 
   override def toString(): String = {
     s"BlockHelper $name ($helper)\n" +

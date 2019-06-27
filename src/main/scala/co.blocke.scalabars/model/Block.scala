@@ -22,23 +22,3 @@ case class Block(openTag: OpenTag, body: Seq[Renderable], closeTag: CloseTag) {
   def flatten: Seq[Renderable] = openTag +: body :+ closeTag
   def toTemplate(opts: Options) = SBTemplate(flatten.toList, opts)
 }
-
-//trait Block extends Renderable {
-//  val openTag: OpenTag
-//  val body: Seq[Renderable]
-//  val closeTag: CloseTag
-//
-//  def render(rc: RenderControl): RenderControl =
-//    (openTag +: body :+ closeTag).foldLeft(rc) { case (rcX, renderable) => renderable.render(rcX) }
-//}
-
-//{ //extends Renderable {
-//  def render(rc: RenderControl): RenderControl =
-//    (openTag +: body :+ closeTag).foldLeft(rc) { case (rcX, renderable) => renderable.render(rcX) }
-//}
-
-//case class EmptyBlock() extends Block {
-//  val openTag: OpenTag = OpenTag()
-//  val body: Seq[Renderable] = Seq.empty[Renderable]
-//  val closeTag: CloseTag = CloseTag()
-//}

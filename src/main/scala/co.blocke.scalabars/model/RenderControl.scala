@@ -1,6 +1,8 @@
 package co.blocke.scalabars
 package model
 
+//TODO: Remove clipTrailingWS from RC
+
 case class RenderControl(
     opts:            Options,
     clipTrailingWS:  Boolean       = false,
@@ -12,25 +14,25 @@ case class RenderControl(
   def addWS(ws: String): RenderControl =
     if (flushTrailingWS || ws.isEmpty)
       this // ignore ws contribution if flushing...
-    else if (clipTrailingWS)
-      this.copy(accumulatedWS  = clipToNextNL(this.accumulatedWS + ws), clipTrailingWS = false)
     else
       this.copy(accumulatedWS = this.accumulatedWS + ws)
 
   // Add rendered Text element
-  def addText(s: String): RenderControl = this.copy(
-    accumulatedWS   = "",
-    out             = this.out.append(this.accumulatedWS + s),
-    clipTrailingWS  = false,
-    flushTrailingWS = false)
+  def addText(s: String): RenderControl =
+    this.copy(
+      accumulatedWS   = "",
+      out             = this.out.append(this.accumulatedWS + s),
+      clipTrailingWS  = false,
+      flushTrailingWS = false)
 
   def ws(): String = {
     accumulatedWS.foldLeft("|") {
-      case (acc, c) => c match {
-        case '\n' => acc + """\n"""
-        case '\t' => acc + """\t"""
-        case ' '  => acc + """."""
-      }
+      case (acc, c) =>
+        c match {
+          case '\n' => acc + """\n"""
+          case '\t' => acc + """\t"""
+          case ' '  => acc + """."""
+        }
     } + "|"
   }
 
@@ -45,6 +47,7 @@ case class RenderControl(
   def reset(): RenderControl = this.copy(clipTrailingWS  = false, flushTrailingWS = false)
   def flushLeading(): RenderControl = this.copy(accumulatedWS = "")
   def flushTrailing(): RenderControl = this.copy(flushTrailingWS = true)
+  /*
   def clipLeading(): RenderControl = this.copy(accumulatedWS = clipToLastNL(this.accumulatedWS))
   def clipTrailing(): RenderControl = this.copy(clipTrailingWS = true)
 
@@ -60,5 +63,5 @@ case class RenderControl(
       case i  => s.take(i + 1)
     }
     after
-  }
+  }*/
 }

@@ -19,13 +19,11 @@ object Scalabars {
       "lookup" -> LookupHelper(),
       "unless" -> UnlessHelper(),
       "with" -> WithHelper(),
-
       // Comparisons
       "eq" -> EqHelper(),
       "ne" -> NeHelper(),
       "or" -> OrHelper(),
       "and" -> AndHelper(),
-
       // Collections
       "first" -> FirstHelper(),
       "last" -> LastHelper(),
@@ -41,17 +39,17 @@ object Scalabars {
       "lengthEquals" -> LengthEqualsHelper(),
       "sortEach" -> SortEachHelper(),
       "withLookup" -> WithLookupHelper(),
-
       // Misc
       "default" -> DefaultHelper(),
       "include" -> IncludeHelper(),
       "markdown" -> MarkdownHelper(),
       "raw" -> RawHelper(),
       "url" -> UrlHelper(),
-
       // Internal
       "else" -> ElseHelper()
-    ), collection.mutable.Map.empty[String, PartialHelper], NoopFileGetter()
+    ),
+    collection.mutable.Map.empty[String, PartialHelper],
+    NoopFileGetter()
   )
 }
 
@@ -80,10 +78,19 @@ case class Scalabars(
   }
 
   //  def registerHelper(name: String, helperJS: String): Scalabars = this.copy(helpers = helpers + (name -> JSHelper(name, helperJS)))
-  def registerHelper(name: String, helper: Helper): Scalabars = this.copy(helpers = helpers + (name -> helper))
+  def registerHelper(name: String, helper: Helper): Scalabars =
+    this.copy(helpers = helpers + (name -> helper))
   def registerPartial(name: String, script: String): Scalabars = {
     val template = compile(script)
-    partials.put(name, PartialHelper(name, template.copy(compiled = OpenTag(ParsedExpression(name), false, false, false, 3) +: template.compiled :+ CloseTag(false, false, false, 3))))
+    partials.put(
+      name,
+      PartialHelper(
+        name,
+        template.copy(compiled = OpenTag(
+          ParsedExpression(name),
+          false,
+          false,
+          3) +: template.compiled :+ CloseTag(false, false, 3))))
     this
   }
 
@@ -93,12 +100,15 @@ case class Scalabars(
 
   def setFileGetter(fileGetter: FileGetter) = this.copy(fileGetter = fileGetter)
 
-  def compile(rawTemplate: String, compileOptions: Map[String, Boolean] = Map.empty[String, Boolean]) = {
+  def compile(
+      rawTemplate:    String,
+      compileOptions: Map[String, Boolean] = Map.empty[String, Boolean]) = {
     val hashArgs = stockOptions ++ compileOptions.map { case (k, v) => (k, BooleanEvalResult(v)) }
     SBTemplate(parser.compile(rawTemplate).toList, Options(this, _hash = hashArgs))
   }
 
-  private[scalabars] def _compileFromContents(contents: Seq[Renderable]) = SBTemplate(contents.toList, Options(this, _hash = stockOptions))
+  private[scalabars] def _compileFromContents(contents: Seq[Renderable]) =
+    SBTemplate(contents.toList, Options(this, _hash = stockOptions))
 
   private[scalabars] def getHelper(name: String): Option[Helper] = helpers.get(name)
   private[scalabars] def getPartial(name: String) = partials.get(name)

@@ -66,6 +66,7 @@ case class Scalabars(
   private lazy val stockOptions: Map[String, EvalResult[_]] = Map(
     "noEscape" -> BooleanEvalResult(false),
     "strict" -> BooleanEvalResult(false),
+    "preventIndent" -> BooleanEvalResult(false),
     "explicitPartialContext" -> BooleanEvalResult(false)
   )
 

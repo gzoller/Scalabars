@@ -32,27 +32,27 @@ object Runme extends App {
     """.stripMargin)
 
   // @formatter:off
-
-  /*
+  //
+  //  val t =
+  //    """{{#* inline "nombre"}}
+  //    |A
+  //    |  B -- {{name}}
+  //    |C
+  //    |{{/inline}}
+  //    |My name is:
+  //    |    {{>nombre}}
+  //    |  Say it loud!""".stripMargin
+  //
   val t =
-    """x{{#* inline "nombre"}}
-    |A
-    |  B -- {{name}}
-    |C
-    |{{/inline}}
-    |My name is:
+    """My name is:
     |{{>nombre}}
     |  Say it loud!""".stripMargin
 
-  println(sb.compile(t)(json))
-   */
-
-  println(sb.compile(
-    """This is a
-    |{{title~}}
-    |
-    |{{title~}}
-    | of the system.""".stripMargin)(json))
+  println(sb.registerPartial(
+    "nombre",
+    """A
+    |  B -- {{name}}
+    |C""".stripMargin).compile(t)(json))
 
   println("-----")
 

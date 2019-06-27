@@ -24,8 +24,8 @@ object PostParse {
           val stage1 = bh.copy(body = bh.body.copy(body = clean(bh.body.body)))
 
           // Clip/Flush WS
-          val stage2 = cleanOpenTag[BlockHelper](zipper, bh.body)
-          val stage3 = cleanCloseTag[BlockHelper](zipper, bh.body)
+          val stage2 = cleanOpenTag[BlockHelper](zipper, stage1.body)
+          val stage3 = cleanCloseTag[BlockHelper](zipper, stage2.body)
 
           val stage4 = stage3.helper match {
             case ph: PartialHelper => stage3.copy(helper = ph.setParent(stage3))
@@ -35,11 +35,11 @@ object PostParse {
 
         case bh: InlinePartialTag =>
           val stage1 = bh.copy(body = bh.body.copy(body = clean(bh.body.body)))
+          zipper.modify(stage1)
 
           // Clip/Flush WS
-          val stage2 = cleanOpenTag[InlinePartialTag](zipper, bh.body)
-          val stage3 = cleanCloseTag[InlinePartialTag](zipper, bh.body)
-          zipper.modify(stage3)
+          val stage2 = cleanOpenTag[InlinePartialTag](zipper, stage1.body)
+          cleanCloseTag[InlinePartialTag](zipper, stage2.body)
 
         case ht: HelperTag =>
           val helper = ht.helper match {
@@ -62,8 +62,9 @@ object PostParse {
                 beforeFn = Some(clipOpenBefore)
                 afterFn = Some(clipCloseAfter)
               }
-              if (ht.wsCtlBefore)
+              if (ht.wsCtlBefore) {
                 beforeFn = Some(flushOpenBefore)
+              }
               if (ht.wsCtlAfter)
                 afterFn = Some(flushCloseAfter)
 

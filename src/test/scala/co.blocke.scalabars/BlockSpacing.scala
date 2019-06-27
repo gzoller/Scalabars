@@ -1,22 +1,22 @@
 package co.blocke.scalabars
 
-import org.scalatest.{ FunSpec, Matchers }
+import org.scalatest.{FunSpec, Matchers}
 import model._
 
 /**
- * There are 16 possible spacing variations indicated by \n before/after the open & close of each block.
- * The combinations are shown below in the 't' declarations.
- *
- * Positions for WS ctl:
- * {{(1)# foo(2)}}
- * A
- * B
- * C
- * {{(3)/foo(4)}}
- */
+  * There are 16 possible spacing variations indicated by \n before/after the open & close of each block.
+  * The combinations are shown below in the 't' declarations.
+  *
+  * Positions for WS ctl:
+  * {{(1)# foo(2)}}
+  * A
+  * B
+  * C
+  * {{(3)/foo(4)}}
+  */
 class BlockSpacing() extends FunSpec with Matchers {
 
-  val sb = Scalabars()
+  val sb   = Scalabars()
   val json = org.json4s.native.JsonMethods.parse("""
                                                    |{
                                                    |  "title": "My New Post",
@@ -305,35 +305,287 @@ class BlockSpacing() extends FunSpec with Matchers {
                                         |  Say it loud!""".stripMargin)
       }
       it("no ws before > close tag") {
-        pending
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B --
+            |  {{@partial-block}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>nombre}}
+            |Content here{{/nombre}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --
+                                        |  Content here
+                                        |C
+                                        |
+                                        |  Say it loud!""".stripMargin)
       }
       it("no ws after > close tag") {
-        pending
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B --
+            |  {{@partial-block}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>nombre}}
+            |Content here
+            |{{/nombre}}Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --
+                                        |  Content here
+                                        |
+                                        |C
+                                        |Say it loud!""".stripMargin)
       }
       it("no ws before @ tag") {
-        pending
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B --{{@partial-block}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>nombre}}
+            |Content here
+            |{{/nombre}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --Content here
+                                        |
+                                        |C
+                                        |  Say it loud!""".stripMargin)
       }
       it("no ws after @ tag") {
-        pending
+        val t = """{{#* inline "nombre"}}
+                  |A
+                  |  B --
+                  |  {{@partial-block}}C
+                  |{{/inline}}
+                  |My name is:
+                  |{{#>nombre}}
+                  |Content here
+                  |{{/nombre}}
+                  |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --
+                                        |  Content here
+                                        |C
+                                        |  Say it loud!""".stripMargin)
       }
-
       it("ws ctl before > open tag") {
-        pending
+        val t =
+          """
+            |  {{~#* inline "nombre"}}
+            |A
+            |  B --
+            |  {{@partial-block}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>nombre}}
+            |Content here
+            |{{/nombre}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --
+                                        |  Content here
+                                        |
+                                        |C
+                                        |  Say it loud!""".stripMargin)
       }
       it("ws ctl after > open tag") {
-        pending
+        val t =
+          """{{#* inline "nombre"~}}
+            |A
+            |  B --
+            |  {{@partial-block}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>nombre}}
+            |Content here
+            |{{/nombre}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --
+                                        |  Content here
+                                        |
+                                        |C
+                                        |  Say it loud!""".stripMargin)
       }
       it("ws ctl before > close tag") {
-        pending
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B --
+            |  {{@partial-block}}
+            |C
+            |{{~/inline}}
+            |My name is:
+            |{{#>nombre}}
+            |Content here
+            |{{/nombre}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --
+                                        |  Content here
+                                        |
+                                        |C  Say it loud!""".stripMargin)
       }
       it("ws ctl after > close tag") {
-        pending
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B --
+            |  {{@partial-block}}
+            |C
+            |{{/inline~}}
+            |My name is:
+            |{{#>nombre}}
+            |Content here
+            |{{/nombre}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --
+                                        |  Content here
+                                        |
+                                        |C
+                                        |  Say it loud!""".stripMargin)
       }
       it("ws ctl before @ tag") {
-        pending
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B --
+            |  {{~@partial-block}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>nombre}}
+            |Content here
+            |{{/nombre}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --Content here
+                                        |
+                                        |C
+                                        |  Say it loud!""".stripMargin)
       }
       it("ws ctl after @ tag") {
-        pending
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B --
+            |  {{@partial-block~}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>nombre}}
+            |Content here
+            |{{/nombre}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --
+                                        |  Content here
+                                        |C
+                                        |  Say it loud!""".stripMargin)
+      }
+      it("ws ctl before #> open tag") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B --
+            |  {{@partial-block}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{~#>nombre}}
+            |Content here
+            |{{/nombre}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:A
+                                        |  B --
+                                        |  Content here
+                                        |
+                                        |C
+                                        |  Say it loud!""".stripMargin)
+      }
+      it("ws ctl after #> open tag") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B --
+            |  {{@partial-block}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>nombre~}}
+            |Content here
+            |{{/nombre}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --
+                                        |  Content here
+                                        |
+                                        |C
+                                        |  Say it loud!""".stripMargin)
+      }
+      it("ws ctl before #> close tag") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B --
+            |  {{@partial-block}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>nombre}}
+            |Content here
+            |{{~/nombre}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --
+                                        |  Content here
+                                        |C
+                                        |  Say it loud!""".stripMargin)
+      }
+      it("ws ctl after #> close tag") {
+        val t =
+          """{{#* inline "nombre"}}
+            |A
+            |  B --
+            |  {{@partial-block}}
+            |C
+            |{{/inline}}
+            |My name is:
+            |{{#>nombre}}
+            |Content here
+            |{{/nombre~}}
+            |  Say it loud!""".stripMargin
+        sb.compile(t)(json) should be("""My name is:
+                                        |A
+                                        |  B --
+                                        |  Content here
+                                        |
+                                        |C
+                                        |Say it loud!""".stripMargin)
       }
     }
   }

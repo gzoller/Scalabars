@@ -19,9 +19,6 @@ case class BlockHelper(
       rc.opts.copy(_hash = rc.opts._hash + ("noEscape" -> BooleanEvalResult(true)))
     eval(escapeOpts) match {
       case r: RenderableEvalResult => // Hey!  We've become something else (PartialHelper)
-        //        if (body.openTag.wsCtlBefore)
-        //          r.value.render(rc.flushTrailing()) // oddment of partial wiring
-        //        else
         r.value.render(rc)
       case e =>
         val raw: String = e

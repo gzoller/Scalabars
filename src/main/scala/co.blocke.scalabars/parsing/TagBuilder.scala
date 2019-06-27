@@ -16,7 +16,8 @@ case class TagBuilder(
     trailingWS:  Whitespace       = Whitespace("")
 ) extends Renderable {
 
-  def render(rc: RenderControl): RenderControl = rc // will never be called... here to make parsing easier
+  def render(rc: RenderControl): RenderControl =
+    rc // will never be called... here to make parsing easier
   def isBlock: Boolean = ctl.isDefined && List("#", "#*", "^", "#>").contains(ctl.get)
 
   // Break out whitespace and convert this builder into a final Tag based on its type
@@ -39,7 +40,14 @@ case class TagBuilder(
             if (isBlock)
               BlockHelper(expr.name, partialHelper, isInverted = false, expr, 3, blockParams, body)
             else
-              HelperTag(expr.name, partialHelper, expr, wsCtlBefore, wsCtlAfter, 3)
+              HelperTag(
+                expr.name,
+                partialHelper,
+                expr,
+                wsCtlBefore,
+                wsCtlAfter,
+                3,
+                Some(leadingWS.ws.reverse.takeWhile(_ != '\n').reverse))
         }
 
       case Some("#") => // Blocks
@@ -65,9 +73,8 @@ case class TagBuilder(
 
       case _ =>
         val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name)) // resolve to either known non-block helper, or fall back to assuming its a path
-        HelperTag(expr.name, helper, expr, wsCtlBefore, wsCtlAfter, arity)
+        HelperTag(expr.name, helper, expr, wsCtlBefore, wsCtlAfter, arity, None)
     }
     List(leadingWS, finalTag, trailingWS)
   }
 }
-

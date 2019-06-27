@@ -5,7 +5,6 @@ package model
 
 case class RenderControl(
     opts:            Options,
-    clipTrailingWS:  Boolean       = false,
     flushTrailingWS: Boolean       = false,
     accumulatedWS:   String        = "", // to accumulate leading ws
     out:             StringBuilder = new StringBuilder()
@@ -22,7 +21,6 @@ case class RenderControl(
     this.copy(
       accumulatedWS   = "",
       out             = this.out.append(this.accumulatedWS + s),
-      clipTrailingWS  = false,
       flushTrailingWS = false)
 
   def ws(): String = {
@@ -44,24 +42,7 @@ case class RenderControl(
     )
   }
 
-  def reset(): RenderControl = this.copy(clipTrailingWS  = false, flushTrailingWS = false)
+  def reset(): RenderControl = this.copy(flushTrailingWS = false)
   def flushLeading(): RenderControl = this.copy(accumulatedWS = "")
   def flushTrailing(): RenderControl = this.copy(flushTrailingWS = true)
-  /*
-  def clipLeading(): RenderControl = this.copy(accumulatedWS = clipToLastNL(this.accumulatedWS))
-  def clipTrailing(): RenderControl = this.copy(clipTrailingWS = true)
-
-  private def clipToNextNL(s: String): String = {
-    s.indexOf('\n') match {
-      case -1 => s
-      case i  => s.drop(i + 1)
-    }
-  }
-  private def clipToLastNL(s: String): String = {
-    val after = s.lastIndexOf('\n') match {
-      case -1 => s
-      case i  => s.take(i + 1)
-    }
-    after
-  }*/
 }

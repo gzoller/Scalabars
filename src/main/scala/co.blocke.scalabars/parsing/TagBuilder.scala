@@ -29,7 +29,26 @@ case class TagBuilder(
       case Some(">") | Some("#>") =>
         expr.exprArg match {
           // Sub-expression (expression in 1st position).  Create an ExpressionTag
-          case Some(e) => ??? // TODO: subexpression
+          case Some(e) =>
+            if (isBlock)
+              BlockHelper(
+                expr.name,
+                ExpressionHelper(e, true),
+                isInverted = false,
+                expr,
+                3,
+                blockParams,
+                body)
+            else
+              HelperTag(
+                expr.name,
+                ExpressionHelper(e, true),
+                expr,
+                wsCtlBefore,
+                wsCtlAfter,
+                3,
+                false,
+                Some(leadingWS.ws.reverse.takeWhile(_ != '\n').reverse))
           // Non-expression tag.  Use expr.name and build the PartialTag
           case None =>
             val partialHelper = sb.getPartial(expr.name) match {
@@ -47,13 +66,23 @@ case class TagBuilder(
                 wsCtlBefore,
                 wsCtlAfter,
                 3,
+                false,
                 Some(leadingWS.ws.reverse.takeWhile(_ != '\n').reverse))
         }
 
       case Some("#") => // Blocks
         expr.exprArg match {
           // Sub-expression (expression in 1st position).  Create an ExpressionTag
-          case Some(e) => ??? // TODO
+          case Some(e) =>
+            BlockHelper(
+              expr.name,
+              ExpressionHelper(e, false),
+              isInverted = false,
+              expr,
+              3,
+              blockParams,
+              body)
+
           // Non-expression tag.  Use expr.name and build the HelperTag
           case None =>
             val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name))
@@ -64,7 +93,15 @@ case class TagBuilder(
       case Some("^") => // Inverted Helper (fn & inverse are reversed, but otherwise the same as normal Helper)
         expr.exprArg match {
           // Sub-expression (expression in 1st position).  Create an ExpressionTag
-          case Some(e) => ??? // TODO
+          case Some(e) =>
+            BlockHelper(
+              expr.name,
+              ExpressionHelper(e, false),
+              isInverted = false,
+              expr,
+              3,
+              blockParams,
+              body)
           // Non-expression tag.  Use expr.name and build the HelperTag
           case None =>
             val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name))
@@ -73,7 +110,7 @@ case class TagBuilder(
 
       case _ =>
         val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name)) // resolve to either known non-block helper, or fall back to assuming its a path
-        HelperTag(expr.name, helper, expr, wsCtlBefore, wsCtlAfter, arity, None)
+        HelperTag(expr.name, helper, expr, wsCtlBefore, wsCtlAfter, arity, false, None)
     }
     List(leadingWS, finalTag, trailingWS)
   }

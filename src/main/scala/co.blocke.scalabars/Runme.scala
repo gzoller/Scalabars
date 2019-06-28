@@ -31,30 +31,53 @@ object Runme extends App {
                                                    |}
     """.stripMargin)
 
-  // @formatter:off
-  //
-  //  val t =
-  //    """{{#* inline "nombre"}}
-  //    |A
-  //    |  B -- {{name}}
-  //    |C
-  //    |{{/inline}}
-  //    |My name is:
-  //    |    {{>nombre}}
-  //    |  Say it loud!""".stripMargin
-  //
   val t =
-    """My name is:
-    |{{>nombre}}
-    |  Say it loud!""".stripMargin
+    """Testing...{{#name}}
+      |  {{#*inline "myPartial"}}
+      |    Foo!
+      |  {{/inline}}
+      |  {{> myPartial}}
+      |  {{#each ../interests}}
+      |    {{#*inline "myPartial"}}
+      |      Bar!
+      |      Again...
+      |    {{/inline}}
+      |    {{> myPartial}}
+      |    {{#with this}}
+      |      Here {{>myPartial}}
+      |    {{/with}}
+      |  {{/each}}
+      |{{/name}}""".stripMargin
 
-  println(sb.registerPartial(
-    "nombre",
-    """A
-    |  B -- {{name}}
-    |C""".stripMargin).compile(t)(json))
+  val t2 = """{{#* inline "greg"}}zoller{{/inline}}{{#> layout }}
+             |  My Content{{/layout}}""".stripMargin
+
+  println(
+    sb.registerPartial(
+      "layout",
+      """Site Content
+                         |{{> @partial-block }}""".stripMargin)
+      .compile(t2)(json))
 
   println("-----")
+
+  /*
+Template:
+     Text(Hello,)
+     Whitespace( )
+     HelperTag myPartial (PartialHelper(myPartial,Template:
+          OpenTag(ParsedExpression(myPartial,List(),None),false,false,3)
+          Whitespace()
+          HelperTag name (PathHelper(name))
+            args: List()
+          Whitespace()
+          Text(!)
+          CloseTag(false,false,3)
+     ,true,false))
+       args: List()
+     Whitespace()
+-----
+   */
 
   //  val t2 = """{{# name}}What'cha {{this}} doin?{{/name}}
   //             |Done""".stripMargin
@@ -66,22 +89,25 @@ object Runme extends App {
 case class FooHelper() extends Helper() {
   def run()(implicit options: Options, partials: Map[String, Template]): EvalResult[_] =
     """This is <b>a</b> test
-    |123
-    |""".stripMargin
+      |123
+      |""".stripMargin
 }
 
-/*
-Template:
-     Text(Hello)
-     Whitespace(
-     )
-     HelperTag name (PathHelper(name))
-       args: List()
-       contents:
-         Text(What'cha doin?)
-         Whitespace(
-     )
-     Whitespace(
-     )
-     Text(Done)
- */ 
+case class Person(name: String, age: Int)
+case class Desc(heavy: String)
+case class Data(
+    name:   String,
+    msg:    String,
+    aNum:   Int,
+    isOK:   Boolean,
+    small:  Long,
+    A:      List[Desc],
+    player: Person
+)
+case class Magic(name: String, stuff: Map[String, Int])
+
+case class Stuff2(
+    foo:   Map[String, String],
+    bar:   Map[String, Int],
+    thing: String
+)

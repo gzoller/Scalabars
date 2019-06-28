@@ -9,6 +9,7 @@ case class HelperTag(
     wsCtlBefore:    Boolean,
     wsCtlAfter:     Boolean,
     arity:          Int,
+    aloneOnLine:    Boolean          = false, // needed for indent of partial block if helper eval is RenderableEvalResult
     savedLeadingWS: Option[String] // for {{> tag}}  Need to save preceeding ws to indent partial block
 ) extends Tag
   with Evalable
@@ -27,7 +28,7 @@ case class HelperTag(
         val raw = r.value.render(subRC).out.toString
 
         // Prepend ws before > tag to each line of block (partial) output
-        if (rc.opts.hash("preventIndent") != "true" && !wsCtlBefore) {
+        if (aloneOnLine && rc.opts.hash("preventIndent") != "true" && !wsCtlBefore) {
           val indent = savedLeadingWS.getOrElse("")
           val bumped =
             raw.split("\n", -1).map(line => if (line != "") indent + line else line).mkString("\n")

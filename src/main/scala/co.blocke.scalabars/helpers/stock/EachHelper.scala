@@ -15,16 +15,20 @@ case class EachHelper(iterateObjects: Boolean = true) extends Helper("items") {
           arg("items") >> LongEvalResult(i) match {
             case Some(ctx) =>
               val iterationCtx = ctx.flatten()
-              val addedBlockParams = options.blockParams.zipWithIndex.foldLeft(Map.empty[String, Context]) {
-                case (bpMap, pair) =>
-                  pair match {
-                    case (bp, 0) => addBlockParam(bpMap, bp, iterationCtx)
-                    case (bp, 1) => addBlockParam(bpMap, bp, iterationCtx.push(JInt(index.value), "$index"))
-                    case (bp, 2) => addBlockParam(bpMap, bp, iterationCtx.push(JBool(first.value), "$first"))
-                    case (bp, 3) => addBlockParam(bpMap, bp, iterationCtx.push(JBool(last.value), "$last"))
-                    case _       => bpMap // do nothing
-                  }
-              }
+              val addedBlockParams =
+                options.blockParams.zipWithIndex.foldLeft(Map.empty[String, Context]) {
+                  case (bpMap, pair) =>
+                    pair match {
+                      case (bp, 0) => addBlockParam(bpMap, bp, iterationCtx)
+                      case (bp, 1) =>
+                        addBlockParam(bpMap, bp, iterationCtx.push(JInt(index.value), "$index"))
+                      case (bp, 2) =>
+                        addBlockParam(bpMap, bp, iterationCtx.push(JBool(first.value), "$first"))
+                      case (bp, 3) =>
+                        addBlockParam(bpMap, bp, iterationCtx.push(JBool(last.value), "$last"))
+                      case _ => bpMap // do nothing
+                    }
+                }
               val data = Map("index" -> index, "first" -> first, "last" -> last)
               options.fn(iterationCtx, data, addedBlockParams)
             case _ => options.inverse()
@@ -35,22 +39,27 @@ case class EachHelper(iterateObjects: Boolean = true) extends Helper("items") {
           arg("items") >> StringEvalResult(key) match {
             case Some(ctx) =>
               val iterationCtx = ctx.flatten()
-              val addedBlockParams = options.blockParams.zipWithIndex.foldLeft(Map.empty[String, Context]) {
-                case (bpMap, pair) =>
-                  pair match {
-                    case (bp, 0) => addBlockParam(bpMap, bp, iterationCtx)
-                    case (bp, 1) => addBlockParam(bpMap, bp, iterationCtx.push(JString(key), "$key"))
-                    case _       => bpMap // do nothing
-                  }
-              }
+              val addedBlockParams =
+                options.blockParams.zipWithIndex.foldLeft(Map.empty[String, Context]) {
+                  case (bpMap, pair) =>
+                    pair match {
+                      case (bp, 0) => addBlockParam(bpMap, bp, iterationCtx)
+                      case (bp, 1) =>
+                        addBlockParam(bpMap, bp, iterationCtx.push(JString(key), "$key"))
+                      case _ => bpMap // do nothing
+                    }
+                }
               options.fn(iterationCtx, Map("key" -> StringEvalResult(key)), addedBlockParams)
             case _ => options.inverse()
           }
         }.mkString
       case o: ContextEvalResult if o.isObject && o.children.nonEmpty => // not iterating the kids...just return the object
-        val bpMap = options.blockParams.headOption.map(bp => addBlockParam(Map.empty[String, Context], bp, o.value)).getOrElse(Map.empty[String, Context])
+        val bpMap = options.blockParams.headOption
+          .map(bp => addBlockParam(Map.empty[String, Context], bp, o.value))
+          .getOrElse(Map.empty[String, Context])
         options.fn(o.value, Map.empty[String, EvalResult[_]], bpMap)
-      case _ => options.inverse()
+      case _ =>
+        options.inverse()
     }
   }
 }

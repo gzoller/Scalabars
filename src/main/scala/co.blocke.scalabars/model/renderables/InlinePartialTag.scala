@@ -39,5 +39,6 @@ case class InlinePartialTag(
     s"InlinePartialTag(${body.body.size})\n" + body.body
       .map(_.toString)
       .map(s => "    " + s)
-      .mkString("\n")
+      .mkString("\n") +
+      "--> (end Inline partial)"
 }

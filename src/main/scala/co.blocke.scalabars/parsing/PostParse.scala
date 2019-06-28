@@ -22,6 +22,7 @@ object PostParse {
 
         case bh: BlockHelper => // This is guaranteed to have WS before & after
           val stage1 = bh.copy(body = bh.body.copy(body = clean(bh.body.body)))
+          zipper.modify(stage1)
 
           // Clip/Flush WS
           val stage2 = cleanOpenTag[BlockHelper](zipper, stage1.body)
@@ -42,7 +43,7 @@ object PostParse {
           cleanCloseTag[InlinePartialTag](zipper, stage2.body)
 
         case ht: HelperTag =>
-          val helper = ht.helper match {
+          val (helper, alone) = ht.helper match {
             case ph: PartialHelper =>
               // Partial tags clip... non-partial, non-block tags don't
               val clearBefore = zipper
@@ -73,16 +74,16 @@ object PostParse {
                 .focus
                 .get
                 .asInstanceOf[HelperTag]
-              ph.setParent(ht)
+              (ph.setParent(ht), aloneOnLine)
 
             case otherHelper =>
               if (ht.wsCtlBefore)
                 flushOpenBefore(zipper)
               if (ht.wsCtlAfter)
                 flushCloseAfter(zipper)
-              otherHelper
+              (otherHelper, false)
           }
-          zipper.modify(ht.copy(helper = helper))
+          zipper.modify(ht.copy(helper      = helper, aloneOnLine = alone))
 
         case _ => // do nothing
       }

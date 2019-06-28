@@ -43,7 +43,13 @@ case class PartialHelper(
               Block(template).get))
 
         case bt: BlockHelper =>
-          // NOTE: At this point template 't' may be EmptyTemplate.  This is OK for a BlockHelper.  It will be resolved in 2nd pass
+          // At this point we have a bit of confusion.  Template 't' may be empty or non-empty.  We're a block, so the block body
+          // could either be a default block or @partial-block contents.  Here's how we differentiate:
+          //
+          // 1. Empty t, isPartialBlock = false     ==> Non-registered/not-inline (failed) partial.  Use block body as failover default content.
+          // 2. Empty t, isPartialBlock = true      ==> Non-registerd, but inline partial found.  Use block body as @partial-block
+          // 3. Non-Empty t, isPartialBlock = false ==> Registered partial (found).  Ignore block body (fail-over but not needed--assign to @partial-block anyway)
+          // 4. Non-Empty t, isPartialBlock = true  ==> (same as #3)  This false case would be a registerd partial that's also a found inline partial
           RenderableEvalResult(
             bt.copy(
               helper = this.copy(
@@ -52,12 +58,6 @@ case class PartialHelper(
       }
     } else {
       // 2nd Pass
-      // For 2nd pass either:
-      //    1) This is a non-block partial (resolved) and the contents of the template are in the BlockHelper's body.
-      //    2) This is an non-found partial block helper with default body
-      //    3) This is a found partial block helper w/body to stuff into @partial-block
-      // For #1 just render the body
-      // For #2 and #3 look at the isPartialBlock flag (true if #3, false if #2)
       val partialContextCandidate = arg("givenContext") match {
         case NoEvalResult() => options.context
         case e: EvalResult[_] =>
@@ -89,10 +89,14 @@ case class PartialHelper(
               partialContextCandidate // not an object context... not much we can do about assignments
           }
 
-      if (isPartialBlock) {
-        val ctx = partialContext.setData("partial-block", options.fn(partialContext))
+      val ctx = partialContext.setData("partial-block", options.fn(partialContext))
+      if (isPartialBlock)
         options.context.partials(name).render(ctx)
-      } else
-        options.fn(partialContext)
+      else
+        t match {
+          case EmptyTemplate() =>
+            ctx.data("partial-block") // fail-over default block body content (already rendered into partial-block
+          case _ => t.render(ctx)
+        }
     }
 }

@@ -60,14 +60,19 @@ case class BlockHelper(
   private def examineBlock(options: Options): (Template, Template) =
     body.body.zipWithIndex
       .collectFirst {
-        case (elseTag: BlockHelper, i) if elseTag.name == "else" =>
+        case (elseTag: HelperTag, i) if elseTag.nameOrPath == "else" =>
           val (fnT, invT) = body.body.splitAt(i)
 
           // Unpack Else to see if there's an embedded 'if'.  If so... convert the Else into an If helper and add to _inverted
           if (elseTag.expr.args.nonEmpty) {
-            val newIf = elseTag.copy(
-              expr = ParsedExpression(elseTag.expr.args.head.value, elseTag.expr.args.tail),
-              body = body.copy(openTag = body.openTag.copy(expr = expr), body = invT.tail.toList)
+            val newIf = BlockHelper(
+              "if",
+              helper,
+              false,
+              ParsedExpression(elseTag.expr.args.head.value, elseTag.expr.args.tail),
+              arity,
+              blockParams,
+              body.copy(openTag = body.openTag.copy(expr = expr), body = invT.tail.toList)
             )
             (fnT, Seq(newIf))
           } else
@@ -85,6 +90,7 @@ case class BlockHelper(
     s"BlockHelper $name ($helper)\n" +
       "  args: " + expr.args + "\n" +
       "  contents: \n" +
-      body.body.map(_.toString).map(s => "    " + s).mkString("\n")
+      body.body.map(_.toString).map(s => "    " + s).mkString("\n") +
+      "\n--> (end BlockHelper)"
   }
 }

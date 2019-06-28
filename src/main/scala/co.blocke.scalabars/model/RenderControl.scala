@@ -1,8 +1,6 @@
 package co.blocke.scalabars
 package model
 
-//TODO: Remove clipTrailingWS from RC
-
 case class RenderControl(
     opts:            Options,
     flushTrailingWS: Boolean       = false,

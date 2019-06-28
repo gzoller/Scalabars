@@ -78,7 +78,8 @@ case class Scalabars(
     ctx
   }
 
-  //  def registerHelper(name: String, helperJS: String): Scalabars = this.copy(helpers = helpers + (name -> JSHelper(name, helperJS)))
+  def registerHelper(name: String, helperJS: String): Scalabars =
+    this.copy(helpers = helpers + (name -> JSHelper(name, helperJS)))
   def registerHelper(name: String, helper: Helper): Scalabars =
     this.copy(helpers = helpers + (name -> helper))
   def registerPartial(name: String, script: String): Scalabars = {
@@ -94,10 +95,6 @@ case class Scalabars(
           3) +: template.compiled :+ CloseTag(false, false, 3))))
     this
   }
-
-  // Used for inline partialss
-  //  private[scalabars] def registerPartial(name: String, contents: List[Renderable]) =
-  //  partials.put(name, NormalTemplate(contents, Options(this, _hash = stockOptions)))
 
   def setFileGetter(fileGetter: FileGetter) = this.copy(fileGetter = fileGetter)
 

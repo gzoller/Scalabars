@@ -37,7 +37,10 @@ case class SBTemplate(
 ) extends Template {
 
   override def render(context: Context): String = {
-    val startingOpts = compileOptions.copy(context = context)
+    val startingOpts =
+      // Need to clear out _fn and _template in case this is a nested template render... If it is, then this template's
+      // render will arrive here (incorrectly) pre-populated with _fn/_inverse from the parent template, which isn't what we want.
+      compileOptions.copy(context  = context, _fn = EmptyTemplate(), _inverse = EmptyTemplate())
     val rc = compiled.foldLeft(RenderControl(startingOpts)) {
       case (rcX, renderable) =>
         renderable.render(rcX)

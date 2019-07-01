@@ -5,8 +5,21 @@ import org.json4s._
 import parsing.PathParser
 
 object Context {
-  val NotFound = Context("", JNothing, List.empty[Context], Map.empty[String, EvalResult[_]], Map.empty[String, Template], Map.empty[String, Context])
-  def root(v: JValue) = Context("/", v, List.empty[Context], Map.empty[String, EvalResult[_]], Map.empty[String, Template], Map.empty[String, Context])
+  val NotFound = Context(
+    "",
+    JNothing,
+    List.empty[Context],
+    Map.empty[String, EvalResult[_]],
+    Map.empty[String, Template],
+    Map.empty[String, Context])
+  def root(v: JValue) =
+    Context(
+      "/",
+      v,
+      List.empty[Context],
+      Map.empty[String, EvalResult[_]],
+      Map.empty[String, Template],
+      Map.empty[String, Context])
   val pathParser = PathParser()
 }
 import Context._
@@ -19,12 +32,15 @@ case class Context(
     partials:    Map[String, Template],
     blockParams: Map[String, Context]) {
 
-  def setData(key: String, value: EvalResult[_]): Context = this.copy(data = this.data + (key -> value))
+  def setData(key: String, value: EvalResult[_]): Context =
+    this.copy(data = this.data + (key -> value))
   def setData(newAdds: Map[String, EvalResult[_]]): Context = this.copy(data = this.data ++ newAdds)
 
-  def push(v: JValue, pathPart: String): Context = Context(bakePath(this, pathPart), v, this +: stack, this.data, this.partials, this.blockParams)
+  def push(v: JValue, pathPart: String): Context =
+    Context(bakePath(this, pathPart), v, this +: stack, this.data, this.partials, this.blockParams)
 
-  private def bakePath(c: Context, part: String): String = c.path + { if (c.path.last != '/') "/" else "" } + part
+  private def bakePath(c: Context, part: String): String =
+    c.path + { if (c.path.last != '/') "/" else "" } + part
 
   def lookup(unparsedPath: String): Context = {
     // Normalize leading '/' to @root/
@@ -56,14 +72,18 @@ case class Context(
             if (ctx.stack.isEmpty)
               throw new BarsException("Path cannot back up (..) beyond history: " + unparsedPath)
             ctx.stack.head
-          case num if num.startsWith("[")   => consumeNumberPart(unparsedPath, num.tail.dropRight(1).toInt, ctx)
+          case num if num.startsWith("[") =>
+            consumeNumberPart(unparsedPath, num.tail.dropRight(1).toInt, ctx)
           case num if num.isNumeric         => consumeNumberPart(unparsedPath, num.toInt, ctx)
           case e if blockParams.contains(e) => blockParams(e)
-          case e => ctx.value match {
-            case jo: JObject if jo.values.contains(e) => ctx.push(jo \ e, e)
-            case jo: JObject                          => NotFound.copy(path = bakePath(ctx, e))
-            case _                                    => throw new BarsException("Illegal attempt to reference a field on a non-object: " + unparsedPath)
-          }
+          case e =>
+            ctx.value match {
+              case jo: JObject if jo.values.contains(e) => ctx.push(jo \ e, e)
+              case _: JObject                           => NotFound.copy(path = bakePath(ctx, e))
+              case _ =>
+                throw new BarsException(
+                  "Illegal attempt to reference a field on a non-object: " + unparsedPath)
+            }
         }
     }
     newCtx.copy(stack = this +: this.stack)
@@ -85,26 +105,30 @@ case class Context(
     ctx.value match {
       case a: JArray => ctx.push(a.arr(index), s"[$index]")
       // Handle bizzare "fake arrays" in Javascript JSON where the key is the int index in string form
-      case o: JObject if (o \ index.toString != JNothing) => ctx.push(o \ index.toString, s"[$index]")
+      case o: JObject if (o \ index.toString != JNothing) =>
+        ctx.push(o \ index.toString, s"[$index]")
       case _ => throw new BarsException("Can't index into a non-array in path: " + wholePath)
     }
   }
 
   def toEvalResult(options: Options): EvalResult[_] =
     this.value match {
-      case JNothing if options.hash("strict") == "true" => throw new BarsException("Path not found: " + path)
-      case JNothing => NoEvalResult()
+      case JNothing if options.hash("strict") == "true" =>
+        throw new BarsException("Path not found: " + path)
+      case JNothing   => NoEvalResult()
       case _: JObject => ContextEvalResult(this)
-      case _: JArray => ContextEvalResult(this)
-      case e: JBool => BooleanEvalResult(e.values)
-      case _ => StringEvalResult(this.value.values.toString)
+      case _: JArray  => ContextEvalResult(this)
+      case e: JBool   => BooleanEvalResult(e.values)
+      case _          => StringEvalResult(this.value.values.toString)
     }
 
   private def toStringPathValue(c: Context) = c.path + " --> " + c.value.toString.take(75) + "..."
   // We can't use toString because that's a valid/needed conversion for Context
   def show: String = {
     toStringPathValue(this) + "\n" +
-      "   Stack:\n" + { if (stack.nonEmpty) stack.map(toStringPathValue).mkString("      ", "\n      ", "\n") else "" } +
+      "   Stack:\n" + {
+        if (stack.nonEmpty) stack.map(toStringPathValue).mkString("      ", "\n      ", "\n") else ""
+      } +
       "   Data: " + data + "\n" +
       "   Partials: " + partials.keys.mkString(" ")
   }

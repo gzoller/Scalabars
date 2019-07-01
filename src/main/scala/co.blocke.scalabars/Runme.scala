@@ -31,60 +31,59 @@ object Runme extends App {
                                                    |}
     """.stripMargin)
 
-  val t =
-    """Testing...{{#name}}
-      |  {{#*inline "myPartial"}}
-      |    Foo!
-      |  {{/inline}}
-      |  {{> myPartial}}
-      |  {{#each ../interests}}
-      |    {{#*inline "myPartial"}}
-      |      Bar!
-      |      Again...
-      |    {{/inline}}
-      |    {{> myPartial}}
-      |    {{#with this}}
-      |      Here {{>myPartial}}
-      |    {{/with}}
-      |  {{/each}}
-      |{{/name}}""".stripMargin
+  // TODO:  WS before {{> myPartial}} is empty!  It's "consumed" by #each's trailing ws, which almost
+  // TODO:  has "\n  " in it!  This is getting missed in TagBuilder, and may be hard to fix there....
+  // TODO:  May be a fix made in PostParse?
 
-  val t2 = """{{#* inline "greg"}}zoller{{/inline}}{{#> layout }}
-             |  My Content{{/layout}}""".stripMargin
+  val js = org.json4s.native.JsonMethods.parse("""
+                                                 |{
+                                                 |  "foo": [
+                                                 |    {
+                                                 |      "bar": "Yes, "
+                                                 |    },
+                                                 |    {
+                                                 |      "bar": "hello "
+                                                 |    },
+                                                 |    {
+                                                 |      "bar": "world."
+                                                 |    }
+                                                 |  ]
+                                                 |}""".stripMargin)
 
-  println(
-    sb.registerPartial(
-      "layout",
-      """Site Content
-                         |{{> @partial-block }}""".stripMargin)
-      .compile(t2)(json))
+  val t = """{{#foo}}{{bar}}{{/foo}}"""
+  println(sb.compile(t)(js))
 
   println("-----")
 
-  /*
-Template:
-     Text(Hello,)
-     Whitespace( )
-     HelperTag myPartial (PartialHelper(myPartial,Template:
-          OpenTag(ParsedExpression(myPartial,List(),None),false,false,3)
-          Whitespace()
-          HelperTag name (PathHelper(name))
-            args: List()
-          Whitespace()
-          Text(!)
-          CloseTag(false,false,3)
-     ,true,false))
-       args: List()
-     Whitespace()
------
-   */
-
-  //  val t2 = """{{# name}}What'cha {{this}} doin?{{/name}}
-  //             |Done""".stripMargin
-  //  println(sb.compile(t2)(json))
-  //  println("-----")
-
 }
+
+/*
+Synthetic::::::
+
+BlockHelper each (EachHelper(true))
+  args: List(PathArgument(foo))
+  contents:
+    Whitespace(,false)
+    HelperTag bar (PathHelper(bar))
+  args: List()
+
+    Whitespace(,false)
+--> (end BlockHelper)
+
+Real Each :::::::
+
+BlockHelper each (EachHelper(true))
+       args: List()
+       contents:
+         Whitespace(,false)
+         HelperTag bar (PathHelper(bar))
+       args: List()
+
+         Whitespace(,false)
+     --> (end BlockHelper)
+
+
+ */
 
 case class FooHelper() extends Helper() {
   def run()(implicit options: Options, partials: Map[String, Template]): EvalResult[_] =

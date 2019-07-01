@@ -5,16 +5,20 @@ import model._
 import renderables._
 import fastparse.NoWhitespace._
 import fastparse._
-import co.blocke.listzipper.mutable.ListZipper
 
 case class HandlebarsParser()(implicit val sb: Scalabars) {
 
   private def template[_: P] = P(renderable.rep)
 
-  private def renderable[_: P]: P[Renderable] = P(tag | text)
+  private def renderable[_: P]: P[Renderable] = P(comment | tag | text)
 
   private def wsctl[_: P] = P("~").!
   private def ctl[_: P] = P("#*" | "#>" | CharIn("!^#>/&")).!
+
+  private def comment[_: P] = P(newComment | oldComment)
+  private def oldComment[_: P] =
+    P("{{!--" ~ (!"--}}" ~ AnyChar).rep.! ~ "--}}").map(c => Comment(c))
+  private def newComment[_: P] = P("{{!" ~ (!"}}" ~ AnyChar).rep.! ~ "}}").map(c => Comment(c))
 
   // A very monadic tag parser! :-)
   private def tag[_: P] = P(
@@ -75,7 +79,7 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
 
       // Finally, pick up any tag body contents (if block tag)
       stage4 <- stage3.isBlock match {
-        case true =>
+        case true if stage3.arity < 4 =>
           P(
             (!(whitespace ~ closeBlock(stage3.arity, stage3.expr.name)) ~/ renderable).rep ~ whitespace ~ closeBlock(
               stage3.arity,
@@ -98,6 +102,20 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
                   closeBlock
                 )
                 stage3.copy(body       = body, trailingWS = ws4)
+            }
+        case true if stage3.arity == 4 => // raw block
+          P(
+            (!(whitespace ~ closeBlock(stage3.arity, stage3.expr.name)) ~ AnyChar).rep.! ~ closeBlock(
+              stage3.arity,
+              stage3.expr.name) ~ whitespace)
+            .map {
+              case (raw, closeBlock, trailingWS) =>
+                val body = Block(
+                  OpenTag(stage3.expr, stage3.wsCtlBefore, stage3.wsCtlAfter, stage3.arity),
+                  Seq(Whitespace(""), Text(raw), Whitespace("")),
+                  closeBlock
+                )
+                stage3.copy(body       = body, trailingWS = trailingWS)
             }
         case false => P("").map(_ => stage3) // pass thru... non-block tag
       }

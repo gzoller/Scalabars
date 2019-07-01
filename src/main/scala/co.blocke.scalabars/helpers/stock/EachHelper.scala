@@ -5,7 +5,7 @@ import model._
 import org.json4s._
 
 case class EachHelper(iterateObjects: Boolean = true) extends Helper("items") {
-  def run()(implicit options: Options, partials: Map[String, Template]): EvalResult[_] = {
+  def run()(implicit options: Options, partials: Map[String, Template]): EvalResult[_] =
     arg("items") match {
       case AsArray(a) if a.arr.nonEmpty =>
         a.arr.indices.map { i =>
@@ -61,5 +61,4 @@ case class EachHelper(iterateObjects: Boolean = true) extends Helper("items") {
       case _ =>
         options.inverse()
     }
-  }
 }

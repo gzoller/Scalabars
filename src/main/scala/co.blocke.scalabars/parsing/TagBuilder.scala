@@ -18,7 +18,8 @@ case class TagBuilder(
 
   def render(rc: RenderControl): RenderControl =
     rc // will never be called... here to make parsing easier
-  def isBlock: Boolean = ctl.isDefined && List("#", "#*", "^", "#>").contains(ctl.get)
+  def isBlock: Boolean =
+    ctl.isDefined && List("#", "#*", "^", "#>").contains(ctl.get) || arity == 4 // raw blocks...
 
   // Break out whitespace and convert this builder into a final Tag based on its type
   def finalize(implicit sb: Scalabars): List[Renderable] = {
@@ -107,6 +108,10 @@ case class TagBuilder(
             val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name))
             BlockHelper(expr.name, helper, isInverted = true, expr, arity, blockParams, body)
         }
+
+      case _ if arity == 4 => // raw block (which strangely don't require a '#' char.  Hmm...
+        val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name)) // resolve to either known non-block helper, or fall back to assuming its a path
+        BlockHelper(expr.name, helper, isInverted = false, expr, arity, blockParams, body)
 
       case _ =>
         val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name)) // resolve to either known non-block helper, or fall back to assuming its a path

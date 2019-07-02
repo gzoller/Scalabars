@@ -31,27 +31,25 @@ object Runme extends App {
                                                    |}
     """.stripMargin)
 
-  // TODO:  WS before {{> myPartial}} is empty!  It's "consumed" by #each's trailing ws, which almost
-  // TODO:  has "\n  " in it!  This is getting missed in TagBuilder, and may be hard to fix there....
-  // TODO:  May be a fix made in PostParse?
+  val t =
+    """Testing...{{#name}}
+      |  {{#*inline "myPartial"}}
+      |    Foo!
+      |  {{/inline}}
+      |  {{> myPartial}}
+      |  {{#each ../interests}}
+      |    {{#*inline "myPartial"}}
+      |      Bar!
+      |      Again...
+      |    {{/inline}}
+      |    {{> myPartial}}
+      |    {{#with this}}
+      |      Here {{>myPartial}}
+      |    {{/with}}
+      |  {{/each}}
+      |{{/name}}""".stripMargin
 
-  val js = org.json4s.native.JsonMethods.parse("""
-                                                 |{
-                                                 |  "foo": [
-                                                 |    {
-                                                 |      "bar": "Yes, "
-                                                 |    },
-                                                 |    {
-                                                 |      "bar": "hello "
-                                                 |    },
-                                                 |    {
-                                                 |      "bar": "world."
-                                                 |    }
-                                                 |  ]
-                                                 |}""".stripMargin)
-
-  val t = """{{#foo}}{{bar}}{{/foo}}"""
-  println(sb.compile(t)(js))
+  println(sb.compile(t)(json))
 
   println("-----")
 
@@ -95,18 +93,18 @@ case class FooHelper() extends Helper() {
 case class Person(name: String, age: Int)
 case class Desc(heavy: String)
 case class Data(
-    name:   String,
-    msg:    String,
-    aNum:   Int,
-    isOK:   Boolean,
-    small:  Long,
-    A:      List[Desc],
+    name: String,
+    msg: String,
+    aNum: Int,
+    isOK: Boolean,
+    small: Long,
+    A: List[Desc],
     player: Person
 )
 case class Magic(name: String, stuff: Map[String, Int])
 
 case class Stuff2(
-    foo:   Map[String, String],
-    bar:   Map[String, Int],
+    foo: Map[String, String],
+    bar: Map[String, Int],
     thing: String
 )

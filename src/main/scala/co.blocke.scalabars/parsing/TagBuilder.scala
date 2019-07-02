@@ -5,15 +5,14 @@ import model._
 import renderables._
 
 case class TagBuilder(
-    leadingWS:   Whitespace,
     arity:       Int,
-    wsCtlBefore: Boolean          = false,
-    ctl:         Option[String]   = None,
-    expr:        ParsedExpression = ParsedExpression("nada"),
-    blockParams: Seq[String]      = Seq.empty[String],
-    wsCtlAfter:  Boolean          = false,
-    body:        Block            = null,
-    trailingWS:  Whitespace       = Whitespace("")
+    wsCtlBefore: Boolean            = false,
+    ctl:         Option[String]     = None,
+    expr:        ParsedExpression   = ParsedExpression("nada"),
+    blockParams: Seq[String]        = Seq.empty[String],
+    wsCtlAfter:  Boolean            = false,
+    body:        Block              = null,
+    trailingWS:  Option[Whitespace] = None
 ) extends Renderable {
 
   def render(rc: RenderControl): RenderControl =
@@ -22,7 +21,7 @@ case class TagBuilder(
     ctl.isDefined && List("#", "#*", "^", "#>").contains(ctl.get) || arity == 4 // raw blocks...
 
   // Break out whitespace and convert this builder into a final Tag based on its type
-  def finalize(implicit sb: Scalabars): List[Renderable] = {
+  def finalize(implicit sb: Scalabars): Seq[Renderable] = {
     val finalTag = ctl match {
       case Some("#*") =>
         InlinePartialTag(expr.args.head, body) // inline partial
@@ -48,8 +47,7 @@ case class TagBuilder(
                 wsCtlBefore,
                 wsCtlAfter,
                 3,
-                false,
-                Some(leadingWS.ws.reverse.takeWhile(_ != '\n').reverse))
+                false)
           // Non-expression tag.  Use expr.name and build the PartialTag
           case None =>
             val partialHelper = sb.getPartial(expr.name) match {
@@ -60,15 +58,7 @@ case class TagBuilder(
             if (isBlock)
               BlockHelper(expr.name, partialHelper, isInverted = false, expr, 3, blockParams, body)
             else
-              HelperTag(
-                expr.name,
-                partialHelper,
-                expr,
-                wsCtlBefore,
-                wsCtlAfter,
-                3,
-                false,
-                Some(leadingWS.ws.reverse.takeWhile(_ != '\n').reverse))
+              HelperTag(expr.name, partialHelper, expr, wsCtlBefore, wsCtlAfter, 3, false)
         }
 
       case Some("#") => // Blocks
@@ -115,8 +105,11 @@ case class TagBuilder(
 
       case _ =>
         val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name)) // resolve to either known non-block helper, or fall back to assuming its a path
-        HelperTag(expr.name, helper, expr, wsCtlBefore, wsCtlAfter, arity, false, None)
+        HelperTag(expr.name, helper, expr, wsCtlBefore, wsCtlAfter, arity, false)
     }
-    List(leadingWS, finalTag, trailingWS)
+    if (trailingWS.isDefined)
+      Seq(finalTag, trailingWS.get)
+    else
+      Seq(finalTag)
   }
 }

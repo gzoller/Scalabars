@@ -199,6 +199,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                         |Line 7""".stripMargin)
       }
     }
+    /*
     describe("Comments") {
       describe("Inline") {
         it("Sample 1") {
@@ -245,5 +246,6 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
         pending
       }
     }
+   */
   }
 }

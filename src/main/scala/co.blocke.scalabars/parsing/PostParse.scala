@@ -17,15 +17,13 @@ object PostParse {
     val zipper = ListZipper(seq)
     while (!zipper.crashedRight) {
       if (zipper.focus.isDefined) zipper.focus.get match {
-        case _: Whitespace =>
-          zipper.mergeRightAs[Whitespace]((r1, r2) => Whitespace(r1.ws + r2.ws, r1.wasLinePruned))
 
-        case bh: BlockHelper => // This is guaranteed to have WS before & after
-          val stage1 = bh.copy(body = bh.body.copy(body = clean(bh.body.body)))
-          zipper.modify(stage1)
+        case bh: BlockHelper =>
+          val stage1 = cleanOpenTag[BlockHelper](zipper, bh.body)
 
-          // Clip/Flush WS
-          val stage2 = cleanOpenTag[BlockHelper](zipper, stage1.body)
+          val stage2 = stage1.copy(body = stage1.body.copy(body = clean(stage1.body.body)))
+          zipper.modify(stage2)
+
           val stage3 = cleanCloseTag[BlockHelper](zipper, stage2.body)
 
           val stage4 = stage3.helper match {
@@ -35,25 +33,23 @@ object PostParse {
           zipper.modify(stage4)
 
         case ipTag: InlinePartialTag =>
-          val stage1 = ipTag.copy(body = ipTag.body.copy(body = clean(ipTag.body.body)))
-          zipper.modify(stage1)
-
-          // Clip/Flush WS
-          val stage2 = cleanOpenTag[InlinePartialTag](zipper, stage1.body)
+          val stage1 = cleanOpenTag[InlinePartialTag](zipper, ipTag.body)
+          val stage2 = stage1.copy(body = stage1.body.copy(body = clean(stage1.body.body)))
+          zipper.modify(stage2)
           cleanCloseTag[InlinePartialTag](zipper, stage2.body)
 
         case ht: HelperTag =>
           val (helper, alone) = ht.helper match {
             case ph: PartialHelper =>
               // Partial tags clip... non-partial, non-block tags don't
-              val clearBefore = zipper
-                .prevAs[Whitespace]
-                .flatMap(ws => if (ws.ws.contains("\n") || ws.wasLinePruned) Some(ws) else None)
-                .isDefined
-              val clearAfter = zipper
-                .nextAs[Whitespace]
-                .flatMap(ws => if (ws.ws.contains("\n") || ws.wasLinePruned) Some(ws) else None)
-                .isDefined
+              val clearBefore = zipper.index == 0 || (zipper.prevAs[Whitespace] match {
+                case Some(ws) if zipper.index == 1 || ws.ws.contains("\n") || ws.isClipped => true
+                case _ => false
+              })
+              val clearAfter = zipper.nextAs[Whitespace] match {
+                case Some(ws) if ws.ws.contains("\n") || ws.isClipped => true
+                case _ => false
+              }
               val aloneOnLine = clearBefore && clearAfter
 
               var beforeFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
@@ -93,11 +89,14 @@ object PostParse {
   }
 
   private def cleanOpenTag[T](z: ListZipper[Renderable], body: Block): T = {
-    val clearAfter = body.body.head.asInstanceOf[Whitespace].ws.contains("\n")
-    val clearBefore = z.index == 1 || z
-      .prevAs[Whitespace]
-      .flatMap(ws => if (ws.ws.contains("\n") || ws.wasLinePruned) Some(ws) else None)
-      .isDefined
+    val clearBefore = z.index == 0 || (z.prevAs[Whitespace] match {
+      case Some(ws) if z.index == 1 || ws.ws.contains("\n") || ws.isClipped => true
+      case _ => false
+    })
+    val clearAfter = body.body.head match {
+      case ws: Whitespace if ws.ws.contains("\n") => true // first ws in body MUST have \n
+      case _                                      => false
+    }
     val aloneOnLine = clearBefore && clearAfter
 
     var beforeFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
@@ -120,11 +119,14 @@ object PostParse {
   }
 
   private def cleanCloseTag[T](z: ListZipper[Renderable], body: Block): T = {
-    val clearBefore = body.body.last.asInstanceOf[Whitespace].ws.contains("\n")
-    val clearAfter = z
-      .nextAs[Whitespace]
-      .flatMap(ws => if (ws.ws.contains("\n") || ws.wasLinePruned) Some(ws) else None)
-      .isDefined
+    val clearBefore = body.body.last match {
+      case ws: Whitespace if ws.ws.contains("\n") => true
+      case _                                      => false
+    }
+    val clearAfter = z.nextAs[Whitespace] match {
+      case Some(ws) if ws.ws.contains("\n") || ws.isClipped => true
+      case _ => false
+    }
     val aloneOnLine = clearBefore && clearAfter
 
     var beforeFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
@@ -194,28 +196,35 @@ object PostParse {
   }
 
   private def clipOpenBefore(z: ListZipper[Renderable]): ListZipper[Renderable] = {
-    z.moveLeft
-    if (z.index == 0 && !z.focus.get.asInstanceOf[Whitespace].ws.contains("\n"))
-      z.modify(Whitespace("", true))
-    else {
-      val (trimmed, hadNL) = clipToLastNL(z.focus.get.asInstanceOf[Whitespace].ws)
-      z.modify(Whitespace(trimmed, hadNL))
+    z.prevAs[Whitespace] match {
+      case Some(ws) =>
+        z.moveLeft
+        if (ws.ws.contains("\n")) {
+          // We care about and keep ws clipped going backwards!
+          val (trimmed, cut, isClipped) = clipToLastNL(z.focusAs[Whitespace].get.ws)
+          z.modify(Whitespace(trimmed, cut, ws.isClipped | isClipped)) // create new Whitespace is ok here
+        } else
+          z.modify(Whitespace("", ws.ws, true)) // alone on line, no \n, so just zero it out w/clip saving
+        z.moveRight
+      case None => // do nothing
     }
-    z.moveRight
     z
   }
 
-  private def clipOpenAfter(z: ListZipper[Renderable]): ListZipper[Renderable] = {
+  private def clipOpenAfter(z: ListZipper[Renderable]): ListZipper[Renderable] = { // ws inside body
     z.focus.get match {
       case bh: BlockHelper =>
         val subzipper = ListZipper(bh.body.body)
-        val (trimmed, hadNL) = clipToNextNL(subzipper.focus.get.asInstanceOf[Whitespace].ws)
-        subzipper.modify(Whitespace(trimmed, hadNL))
+        val ws = subzipper.focusAs[Whitespace].get
+        val (trimmed, isClipped) = clipToNextNL(ws.ws)
+        subzipper.modify(ws.copy(ws        = trimmed, isClipped = ws.isClipped | isClipped)) // copy--don't create new Whitespace
         z.modify(bh.copy(body = bh.body.copy(body = subzipper.toList)))
+
       case ih: InlinePartialTag =>
         val subzipper = ListZipper(ih.body.body)
-        val (trimmed, hadNL) = clipToNextNL(subzipper.focus.get.asInstanceOf[Whitespace].ws)
-        subzipper.modify(Whitespace(trimmed, hadNL))
+        val ws = subzipper.focusAs[Whitespace].get
+        val (trimmed, isClipped) = clipToNextNL(ws.ws)
+        subzipper.modify(ws.copy(ws        = trimmed, isClipped = ws.isClipped | isClipped))
         z.modify(ih.copy(body = ih.body.copy(body = subzipper.toList)))
     }
   }
@@ -224,33 +233,39 @@ object PostParse {
     z.focus.get match {
       case bh: BlockHelper =>
         val subzipper = ListZipper(bh.body.body).last
-        val (trimmed, hadNL) = clipToLastNL(subzipper.focus.get.asInstanceOf[Whitespace].ws)
-        subzipper.modify(Whitespace(trimmed, hadNL))
+        val (trimmed, cut, isClipped) = clipToLastNL(subzipper.focusAs[Whitespace].get.ws)
+        subzipper.modify(Whitespace(trimmed, cut, isClipped))
         z.modify(bh.copy(body = bh.body.copy(body = subzipper.toList)))
+
       case ih: InlinePartialTag =>
         val subzipper = ListZipper(ih.body.body).last
-        val (trimmed, hadNL) = clipToLastNL(subzipper.focus.get.asInstanceOf[Whitespace].ws)
-        subzipper.modify(Whitespace(trimmed, hadNL))
+        val (trimmed, cut, isClipped) = clipToLastNL(
+          subzipper.focus.get.asInstanceOf[Whitespace].ws)
+        subzipper.modify(Whitespace(trimmed, cut, isClipped))
         z.modify(ih.copy(body = ih.body.copy(body = subzipper.toList)))
     }
   }
 
   private def clipCloseAfter(z: ListZipper[Renderable]): ListZipper[Renderable] = {
     z.moveRight
-    val (trimmed, hadNL) = clipToNextNL(z.focus.get.asInstanceOf[Whitespace].ws)
-    z.modify(Whitespace(trimmed, hadNL))
+    val ws = z.focusAs[Whitespace].get
+    val (trimmed, isClipped) = clipToNextNL(ws.ws)
+    z.modify(ws.copy(ws        = trimmed, isClipped = ws.isClipped | isClipped))
     z.moveLeft
   }
 
-  private def clipToNextNL(s: String): (String, Boolean) =
+  private def clipToNextNL(s: String): (String, Boolean) = // Return (fixed string, clipped part minus newline)
     s.indexOf('\n') match {
       case -1 => (s, false)
-      case i  => (s.drop(i + 1), true)
+      case i =>
+        (s.drop(i + 1), true)
     }
 
-  private def clipToLastNL(s: String): (String, Boolean) =
+  private def clipToLastNL(s: String): (String, String, Boolean) = // Return (fixed string, clipped part minus newline)
     s.lastIndexOf('\n') match {
-      case -1 => (s, false)
-      case i  => (s.take(i + 1), true)
+      case -1 => (s, "", false)
+      case i =>
+        val fixed = s.take(i + 1)
+        (fixed, s.diff(fixed), true)
     }
 }

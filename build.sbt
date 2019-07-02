@@ -17,7 +17,7 @@ val graalvm      = "org.graalvm.sdk"      % "graal-sdk"       % graalversion
 val graaljs      = "org.graalvm.js"       % "js-scriptengine" % graalversion
 val graaljs2     = "org.graalvm.js"       % "js"              % graalversion
 val markdown     = "com.vladsch.flexmark" % "flexmark-all"    % "0.42.6"
-val zipper       = "co.blocke"            %% "listzipper"     % "0.1.3_a6547a_RC"
+val zipper       = "co.blocke"            %% "listzipper"     % "0.1.3"
 
 val basicSettings = Seq(
   coverageMinimum := 92, // really this should be 96% but mongo isn't quite up to that yet

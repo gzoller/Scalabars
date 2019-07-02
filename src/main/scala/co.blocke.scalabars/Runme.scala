@@ -28,26 +28,40 @@ object Runme extends App {
                                                    |    "age": 12
                                                    |  },
                                                    |  "stuff":["a","b","c"]
-                                                   |}
-    """.stripMargin)
+                                                   |}""".stripMargin)
 
-  val t =
-    """Testing...{{#name}}
-      |  {{#each ../interests}}
-      |  {{/each}}
-      |{{/name}}""".stripMargin
-  val t2 =
-    """Testing...{{#name}}
-      |  {{#each ../interests}}
-      |    {{#*inline "myPartial"}}
-      |      Bar!  {{this.item}}
-      |      Again...
-      |    {{/inline}}
-      |    {{> myPartial}}
-      |  {{/each}}
-      |{{/name}}""".stripMargin
+  val js2 = org.json4s.native.JsonMethods.parse("""{
+                                                  |  "stuff": [
+                                                  |    [
+                                                  |      {
+                                                  |      "name": "Greg",
+                                                  |      "age": 53
+                                                  |      },
+                                                  |      {
+                                                  |      "name": "Lili",
+                                                  |      "age": 44
+                                                  |      }
+                                                  |    ],
+                                                  |    [
+                                                  |      {
+                                                  |      "name": "Mike",
+                                                  |      "age": 34
+                                                  |      },
+                                                  |      {
+                                                  |      "name": "Sally",
+                                                  |      "age": 33
+                                                  |      }
+                                                  |    ]
+                                                  |  ]
+                                                  |}""".stripMargin)
 
-  println(sb.compile(t2)(json))
+  val t = """{{#each stuff}}
+            |{{#each this}}
+            |  {{@../index}}  {{this.name}}
+            |{{/each}}
+            |{{/each}}""".stripMargin
+
+  println(sb.compile(t)(js2))
 
   println("-----")
 

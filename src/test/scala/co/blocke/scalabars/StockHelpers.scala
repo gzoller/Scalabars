@@ -44,8 +44,40 @@ class StockHelpers() extends FunSpec with Matchers {
       sb.compile("{{ \nok\n\n }}")(data) should equal("Good")
     }
     it("@../index (path data variable lookup) must work") {
-      // See https://handlebarsjs.com/block_helpers.html
-      (pending)
+      val json = org.json4s.native.JsonMethods.parse("""{
+                                                       |  "stuff": [
+                                                       |    [
+                                                       |      {
+                                                       |      "name": "Greg",
+                                                       |      "age": 53
+                                                       |      },
+                                                       |      {
+                                                       |      "name": "Lili",
+                                                       |      "age": 44
+                                                       |      }
+                                                       |    ],
+                                                       |    [
+                                                       |      {
+                                                       |      "name": "Mike",
+                                                       |      "age": 34
+                                                       |      },
+                                                       |      {
+                                                       |      "name": "Sally",
+                                                       |      "age": 33
+                                                       |      }
+                                                       |    ]
+                                                       |  ]
+                                                       |}""".stripMargin)
+      val t = """{{#each stuff}}
+                |{{#each this}}
+                |  {{@../index}}  {{this.name}}
+                |{{/each}}
+                |{{/each}}""".stripMargin
+      sb.compile(t)(json) should be("""  0  Greg
+                                      |  0  Lili
+                                      |  1  Mike
+                                      |  1  Sally
+                                      |""".stripMargin)
     }
   }
   describe("---------------------------\n:  Stock Builtin Helpers  :\n---------------------------") {

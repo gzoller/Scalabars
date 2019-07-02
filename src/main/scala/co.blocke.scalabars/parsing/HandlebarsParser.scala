@@ -12,7 +12,20 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
   private def template[_: P] = P(whitespace.? ~ renderable.rep).map {
     case (ws, r) => ws.map(w => w +: r.flatten).getOrElse(r.flatten)
   }
-  private def renderable[_: P]: P[Seq[Renderable]] = P(tag | text)
+  private def renderable[_: P]: P[Seq[Renderable]] = P(comment | tag | text)
+
+  private def comment[_: P] = P(newComment | oldComment)
+  private def oldComment[_: P] =
+    P("{{!--" ~ (!"--}}" ~ AnyChar).rep.! ~ "--}}" ~ whitespace.?).map {
+      case (cmt, ws) =>
+        if (ws.isDefined) Seq(Comment(cmt), Whitespace(ws.get.ws)) else Seq(Comment(cmt))
+    }
+  private def newComment[_: P] =
+    P("{{!" ~ (!"}}" ~ AnyChar).rep.! ~ "}}" ~ whitespace.?)
+      .map {
+        case (cmt, ws) =>
+          if (ws.isDefined) Seq(Comment(cmt), Whitespace(ws.get.ws)) else Seq(Comment(cmt))
+      }
 
   //-----------------------------<< Tag Parser
   // A very monadic tag parser! :-)
@@ -214,8 +227,8 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
           else {
             ctx.freshSuccess(
               Seq(
-              Text(ctx.input.slice(start, Math.max(0, k) + 1)),
-              Whitespace(ctx.input.slice(k + 1, p))),
+                Text(ctx.input.slice(start, Math.max(0, k) + 1)),
+                Whitespace(ctx.input.slice(k + 1, p))),
               p)
           }
         case None =>

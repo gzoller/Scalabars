@@ -43,50 +43,56 @@ case class Context(
     c.path + { if (c.path.last != '/') "/" else "" } + part
 
   def lookup(unparsedPath: String): Context = {
-    // Normalize leading '/' to @root/
-    val path = pathParser.pathCompile(unparsedPath) match {
-      // Some operations evaluate to a literal and push a synthetic value onto the stack, i.e. it's a value
-      // that can't be arrived at by natigating down the original data tree.  These values have a path ending
-      // with a '$' value.  When we do a lookup on such a path, we want to convert the $ value to '.', or
-      // path relative to the synthetic thing we're starting with.
-      case "" :: v :: rest if v.startsWith("$") => "." +: rest
-      case "" :: rest                           => "@root" +: rest
-      case p                                    => p
-    }
 
-    val newCtx = path.foldLeft(this) {
-      case (ctx, pathElement) =>
-        pathElement match {
-          case "@root" => if (ctx.stack.isEmpty) ctx else ctx.stack.last
-          case special if special.startsWith("@") && ctx.data.contains(special.tail) =>
-            ctx.data(special.tail) match {
-              case e: StringEvalResult     => ctx.push(JString(e.value), special)
-              case e: SafeStringEvalResult => ctx.push(JString(e.value), special)
-              case e: ContextEvalResult    => ctx.push(e.value.value, special)
-              case e: LongEvalResult       => ctx.push(JLong(e.value), special)
-              case e: DoubleEvalResult     => ctx.push(JDouble(e.value), special)
-              case e: BooleanEvalResult    => ctx.push(JBool(e.value), special)
-            }
-          case "." | "this" => ctx
-          case ".." =>
-            if (ctx.stack.isEmpty)
-              throw new BarsException("Path cannot back up (..) beyond history: " + unparsedPath)
-            ctx.stack.head
-          case num if num.startsWith("[") =>
-            consumeNumberPart(unparsedPath, num.tail.dropRight(1).toInt, ctx)
-          case num if num.isNumeric         => consumeNumberPart(unparsedPath, num.toInt, ctx)
-          case e if blockParams.contains(e) => blockParams(e)
-          case e =>
-            ctx.value match {
-              case jo: JObject if jo.values.contains(e) => ctx.push(jo \ e, e)
-              case _: JObject                           => NotFound.copy(path = bakePath(ctx, e))
-              case _ =>
-                throw new BarsException(
-                  "Illegal attempt to reference a field on a non-object: " + unparsedPath)
-            }
-        }
+    if (unparsedPath.startsWith("@../")) {
+      stack.head.lookup("@" + unparsedPath.drop(4))
+    } else {
+
+      // Normalize leading '/' to @root/
+      val path = pathParser.pathCompile(unparsedPath) match {
+        // Some operations evaluate to a literal and push a synthetic value onto the stack, i.e. it's a value
+        // that can't be arrived at by natigating down the original data tree.  These values have a path ending
+        // with a '$' value.  When we do a lookup on such a path, we want to convert the $ value to '.', or
+        // path relative to the synthetic thing we're starting with.
+        case "" :: v :: rest if v.startsWith("$") => "." +: rest
+        case "" :: rest                           => "@root" +: rest
+        case p                                    => p
+      }
+
+      val newCtx = path.foldLeft(this) {
+        case (ctx, pathElement) =>
+          pathElement match {
+            case "@root" => if (ctx.stack.isEmpty) ctx else ctx.stack.last
+            case special if special.startsWith("@") && ctx.data.contains(special.tail) =>
+              ctx.data(special.tail) match {
+                case e: StringEvalResult     => ctx.push(JString(e.value), special)
+                case e: SafeStringEvalResult => ctx.push(JString(e.value), special)
+                case e: ContextEvalResult    => ctx.push(e.value.value, special)
+                case e: LongEvalResult       => ctx.push(JLong(e.value), special)
+                case e: DoubleEvalResult     => ctx.push(JDouble(e.value), special)
+                case e: BooleanEvalResult    => ctx.push(JBool(e.value), special)
+              }
+            case "." | "this" => ctx
+            case ".." =>
+              if (ctx.stack.isEmpty)
+                throw new BarsException("Path cannot back up (..) beyond history: " + unparsedPath)
+              ctx.stack.head
+            case num if num.startsWith("[") =>
+              consumeNumberPart(unparsedPath, num.tail.dropRight(1).toInt, ctx)
+            case num if num.isNumeric         => consumeNumberPart(unparsedPath, num.toInt, ctx)
+            case e if blockParams.contains(e) => blockParams(e)
+            case e =>
+              ctx.value match {
+                case jo: JObject if jo.values.contains(e) => ctx.push(jo \ e, e)
+                case _: JObject                           => NotFound.copy(path = bakePath(ctx, e))
+                case _ =>
+                  throw new BarsException(
+                    "Illegal attempt to reference a field on a non-object: " + unparsedPath)
+              }
+          }
+      }
+      newCtx.copy(stack = this +: this.stack)
     }
-    newCtx.copy(stack = this +: this.stack)
   }
 
   /**

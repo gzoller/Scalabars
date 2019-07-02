@@ -1,6 +1,6 @@
 package co.blocke.scalabars
 
-import org.scalatest.{ FunSpec, Matchers }
+import org.scalatest.{FunSpec, Matchers}
 
 class HandlebarsCookbook() extends FunSpec with Matchers {
 
@@ -18,7 +18,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                          |  ]
                                                          |}
           """.stripMargin)
-        val t = "{{#foo}}Ya!{{/foo}}"
+        val t    = "{{#foo}}Ya!{{/foo}}"
         sb.compile(t)(json) should be("Ya!Ya!Ya!")
       }
       describe("Block for True") {
@@ -31,7 +31,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  }
                                                            |}
             """.stripMargin)
-          val t = "{{#foo}}Ya!{{/foo}}"
+          val t    = "{{#foo}}Ya!{{/foo}}"
           sb.compile(t)(json) should be("Ya!")
         }
         it("Render inner for string") {
@@ -40,7 +40,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  "foo": "test"
                                                            |}
             """.stripMargin)
-          val t = "{{#foo}}Ya!{{/foo}}"
+          val t    = "{{#foo}}Ya!{{/foo}}"
           sb.compile(t)(json) should be("Ya!")
         }
         it("Render inner for number") {
@@ -49,7 +49,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  "foo": 1
                                                            |}
             """.stripMargin)
-          val t = "{{#foo}}Ya!{{/foo}}"
+          val t    = "{{#foo}}Ya!{{/foo}}"
           sb.compile(t)(json) should be("Ya!")
         }
         it("Render for 0") {
@@ -58,7 +58,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  "foo": 0
                                                            |}
             """.stripMargin)
-          val t = "{{#foo}}Ya!{{/foo}}"
+          val t    = "{{#foo}}Ya!{{/foo}}"
           sb.compile(t)(json) should be("Ya!")
         }
         it("Render for empty string") {
@@ -67,7 +67,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  "foo": ""
                                                            |}
             """.stripMargin)
-          val t = "{{#foo}}Ya!{{/foo}}"
+          val t    = "{{#foo}}Ya!{{/foo}}"
           sb.compile(t)(json) should be("Ya!")
         }
         it("Render for true") {
@@ -76,7 +76,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  "foo": true
                                                            |}
             """.stripMargin)
-          val t = "{{#foo}}Ya!{{/foo}}"
+          val t    = "{{#foo}}Ya!{{/foo}}"
           sb.compile(t)(json) should be("Ya!")
         }
       }
@@ -87,7 +87,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  "foo": false
                                                            |}
             """.stripMargin)
-          val t = "{{#foo}}Ya!{{/foo}}"
+          val t    = "{{#foo}}Ya!{{/foo}}"
           sb.compile(t)(json) should be("")
         }
         it("No render for null or undefined") {
@@ -96,7 +96,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  "foo": null
                                                            |}
             """.stripMargin)
-          val t = "{{#foo}}Ya!{{/foo}}"
+          val t    = "{{#foo}}Ya!{{/foo}}"
           sb.compile(t)(json) should be("")
         }
         it("No render for empty array") {
@@ -105,7 +105,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  "foo": []
                                                            |}
             """.stripMargin)
-          val t = "{{#foo}}Ya!{{/foo}}"
+          val t    = "{{#foo}}Ya!{{/foo}}"
           sb.compile(t)(json) should be("")
         }
       }
@@ -120,7 +120,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  "bar": "OK"
                                                            |}
             """.stripMargin)
-          val t = """{{foo}},{{bar}}
+          val t    = """{{foo}},{{bar}}
                     |{{#foo}}{{foo}},{{bar}}{{/foo}}""".stripMargin
           sb.compile(t)(json) should be("""[object Object],OK
                                           |Hello,World""".stripMargin)
@@ -135,7 +135,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  }
                                                            |}
             """.stripMargin)
-          val t = """{{#foo}}{{#bar}}{{moo}}{{/bar}}{{/foo}}"""
+          val t    = """{{#foo}}{{#bar}}{{moo}}{{/bar}}{{/foo}}"""
           sb.compile(t)(json) should be("MOO!")
         }
         it("Loop then context switched") {
@@ -154,7 +154,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  ]
                                                            |}
             """.stripMargin)
-          val t = """{{#foo}}{{bar}}{{/foo}}"""
+          val t    = """{{#foo}}{{bar}}{{/foo}}"""
           sb.compile(t)(json) should be("Yes, hello world.")
         }
       }
@@ -166,7 +166,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                          |  "foo": 1
                                                          |}
           """.stripMargin)
-        val t = """Line 1
+        val t    = """Line 1
                   |{{foo}}
                   |Line 3
                   |  {{foo}}
@@ -187,7 +187,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                          |  "foo": 1
                                                          |}
           """.stripMargin)
-        val t = """Line 1
+        val t    = """Line 1
                   |{{foo~}}
                   |Line 3
                   |  {{~foo~}}
@@ -199,7 +199,6 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                         |Line 7""".stripMargin)
       }
     }
-    /*
     describe("Comments") {
       describe("Inline") {
         it("Sample 1") {
@@ -208,7 +207,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  "foo": "OK"
                                                            |}
             """.stripMargin)
-          val t = """{{#foo}}Ya!{{! ignored this comment}}{{/foo}}"""
+          val t    = """{{#foo}}Ya!{{! ignored this comment}}{{/foo}}"""
           sb.compile(t)(json) should be("""Ya!""")
         }
         it("Sample 2") {
@@ -228,7 +227,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  "foo": true
                                                            |}
             """.stripMargin)
-          val t = """Comment example: {{! comment with }} is not ok }}"""
+          val t    = """Comment example: {{! comment with }} is not ok }}"""
           sb.compile(t)(json) should be("""Comment example:  is not ok }}""")
         }
         // TODO: This is failing because we need streamed token emitting in the parser to generate preceeding Whitespace() ahead of the Comment
@@ -238,7 +237,7 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
                                                            |  "foo": true
                                                            |}
                                                          """.stripMargin)
-          val t = """{{#name}}Ya! {{! ignored this comment}}{{/name}}Done"""
+          val t    = """{{#name}}Ya! {{! ignored this comment}}{{/name}}Done"""
           sb.compile(t)(json) should be("Ya! Done")
         }
       }
@@ -246,6 +245,5 @@ class HandlebarsCookbook() extends FunSpec with Matchers {
         pending
       }
     }
-   */
   }
 }

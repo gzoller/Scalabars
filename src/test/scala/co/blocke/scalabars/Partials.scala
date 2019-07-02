@@ -125,7 +125,7 @@ class Partials() extends FunSpec with Matchers {
               |  {{> myPartial}}
               |  {{#each ../interests}}
               |    {{#*inline "myPartial"}}
-              |      Bar!
+              |      Bar!    {{this.item}}
               |      Again...
               |    {{/inline}}
               |    {{> myPartial}}
@@ -136,14 +136,14 @@ class Partials() extends FunSpec with Matchers {
               |{{/name}}""".stripMargin
           sb2.compile(t)(json) should be("""Testing...
                                            |      Foo!
-                                           |          Bar!
+                                           |          Bar!    car
                                            |          Again...
-                                           |      Here       Bar!
+                                           |      Here       Bar!    car
                                            |      Again...
                                            |
-                                           |          Bar!
+                                           |          Bar!    boat
                                            |          Again...
-                                           |      Here       Bar!
+                                           |      Here       Bar!    boat
                                            |      Again...
                                            |
                                            |""".stripMargin)

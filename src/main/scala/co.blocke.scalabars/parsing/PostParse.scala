@@ -94,8 +94,9 @@ object PostParse {
       case _ => false
     })
     val clearAfter = body.body.head match {
-      case ws: Whitespace if ws.ws.contains("\n") => true // first ws in body MUST have \n
-      case _                                      => false
+      case ws: Whitespace if ws.ws.contains("\n") || ws.isClipped =>
+        true // first ws in body MUST have \n
+      case _ => false
     }
     val aloneOnLine = clearBefore && clearAfter
 
@@ -120,8 +121,8 @@ object PostParse {
 
   private def cleanCloseTag[T](z: ListZipper[Renderable], body: Block): T = {
     val clearBefore = body.body.last match {
-      case ws: Whitespace if ws.ws.contains("\n") => true
-      case _                                      => false
+      case ws: Whitespace if ws.ws.contains("\n") || ws.isClipped => true
+      case _ => false
     }
     val clearAfter = z.nextAs[Whitespace] match {
       case Some(ws) if ws.ws.contains("\n") || ws.isClipped => true
@@ -233,8 +234,14 @@ object PostParse {
     z.focus.get match {
       case bh: BlockHelper =>
         val subzipper = ListZipper(bh.body.body).last
-        val (trimmed, cut, isClipped) = clipToLastNL(subzipper.focusAs[Whitespace].get.ws)
-        subzipper.modify(Whitespace(trimmed, cut, isClipped))
+        val ws = subzipper.focusAs[Whitespace].get
+        if (!ws.ws.contains("\n") && ws.isClipped)
+          // Already clipped, and we can't be in this function unless tag is alone-on-line, so just eliminate the remaining ws
+          subzipper.delete
+        else {
+          val (trimmed, cut, isClipped) = clipToLastNL(ws.ws)
+          subzipper.modify(Whitespace(trimmed, cut, isClipped))
+        }
         z.modify(bh.copy(body = bh.body.copy(body = subzipper.toList)))
 
       case ih: InlinePartialTag =>

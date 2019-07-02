@@ -33,55 +33,25 @@ object Runme extends App {
 
   val t =
     """Testing...{{#name}}
-      |  {{#*inline "myPartial"}}
-      |    Foo!
-      |  {{/inline}}
-      |  {{> myPartial}}
+      |  {{#each ../interests}}
+      |  {{/each}}
+      |{{/name}}""".stripMargin
+  val t2 =
+    """Testing...{{#name}}
       |  {{#each ../interests}}
       |    {{#*inline "myPartial"}}
-      |      Bar!
+      |      Bar!  {{this.item}}
       |      Again...
       |    {{/inline}}
       |    {{> myPartial}}
-      |    {{#with this}}
-      |      Here {{>myPartial}}
-      |    {{/with}}
       |  {{/each}}
       |{{/name}}""".stripMargin
 
-  println(sb.compile(t)(json))
+  println(sb.compile(t2)(json))
 
   println("-----")
 
 }
-
-/*
-Synthetic::::::
-
-BlockHelper each (EachHelper(true))
-  args: List(PathArgument(foo))
-  contents:
-    Whitespace(,false)
-    HelperTag bar (PathHelper(bar))
-  args: List()
-
-    Whitespace(,false)
---> (end BlockHelper)
-
-Real Each :::::::
-
-BlockHelper each (EachHelper(true))
-       args: List()
-       contents:
-         Whitespace(,false)
-         HelperTag bar (PathHelper(bar))
-       args: List()
-
-         Whitespace(,false)
-     --> (end BlockHelper)
-
-
- */
 
 case class FooHelper() extends Helper() {
   def run()(implicit options: Options, partials: Map[String, Template]): EvalResult[_] =
@@ -93,18 +63,53 @@ case class FooHelper() extends Helper() {
 case class Person(name: String, age: Int)
 case class Desc(heavy: String)
 case class Data(
-    name: String,
-    msg: String,
-    aNum: Int,
-    isOK: Boolean,
-    small: Long,
-    A: List[Desc],
+    name:   String,
+    msg:    String,
+    aNum:   Int,
+    isOK:   Boolean,
+    small:  Long,
+    A:      List[Desc],
     player: Person
 )
 case class Magic(name: String, stuff: Map[String, Int])
 
 case class Stuff2(
-    foo: Map[String, String],
-    bar: Map[String, Int],
+    foo:   Map[String, String],
+    bar:   Map[String, Int],
     thing: String
 )
+
+/*
+
+  val t =
+    """Testing...{{#name}}
+      |  {{#each ../interests}}
+      |    {{#*inline "myPartial"}}
+      |      Bar!
+      |      Again...
+      |    {{/inline}}
+      |    {{> myPartial}}
+      |  {{/each}}
+      |{{/name}}""".stripMargin
+
+Template:
+     Text(Testing...)
+     Whitespace ||
+     BlockHelper name (PathHelper(name))
+        Whitespace |\n| clipped: |  |
+        BlockHelper each (EachHelper(true))
+           Whitespace || clipped: |    |
+           InlinePartialTag(3)
+              Whitespace |      | clipped: ||
+              Text(Bar!     Again...)
+              Whitespace |\n| clipped: |    |
+           --> (end Inline partial)
+           Whitespace || clipped: |    |
+           HelperTag myPartial (PartialHelper(myPartial,Template:,true,false))
+           Whitespace |  | clipped: ||
+        --> (end BlockHelper)
+        Whitespace |\n|
+     --> (end BlockHelper)
+
+
+ */

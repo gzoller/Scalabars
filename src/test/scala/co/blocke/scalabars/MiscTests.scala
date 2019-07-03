@@ -1,10 +1,10 @@
 package co.blocke.scalabars
 
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.{ FunSpec, Matchers }
 
 class MiscTests() extends FunSpec with Matchers {
 
-  val sb   = Scalabars().registerPartial("childEntry", "Kid: {{>@partial-block}}")
+  val sb = Scalabars().registerPartial("childEntry", "Kid: {{>@partial-block}}")
   val json = org.json4s.native.JsonMethods.parse("""
                                                    |{
                                                    |  "name": "Greg",
@@ -74,7 +74,7 @@ class MiscTests() extends FunSpec with Matchers {
                                                        |  },
                                                        |  "qoo": "YA!"
                                                        |}""".stripMargin)
-      val t    = """{{#each foo}}
+      val t = """{{#each foo}}
                 |  {{#each bar}}
                 |    {{.}},{{../qoo}},{{../../qoo}}
                 |  {{/each}}
@@ -96,7 +96,7 @@ class MiscTests() extends FunSpec with Matchers {
                                                          |    "value":"boat"
                                                          |  }]
                                                          |}""".stripMargin)
-        val t    = """{{#each children as |child|}}
+        val t = """{{#each children as |child|}}
                   |  {{#> childEntry}}
                   |    {{child.value}}
                   |  {{/childEntry}}
@@ -113,7 +113,7 @@ class MiscTests() extends FunSpec with Matchers {
                                                          |    "value":"boat"
                                                          |  }]
                                                          |}""".stripMargin)
-        val t    = """{{#each children as |child id isFirst|}}
+        val t = """{{#each children as |child id isFirst|}}
                   |  {{#> childEntry}}
                   |    {{id}} - {{child.value}} {{#isFirst}}First!{{/isFirst}}
                   |  {{/childEntry}}
@@ -137,7 +137,7 @@ class MiscTests() extends FunSpec with Matchers {
                                                          |    "value":"boat"
                                                          |  }
                                                          |}""".stripMargin)
-        val t    = """{{#each children as |thing key|}}
+        val t = """{{#each children as |thing key|}}
                   |  {{#> childEntry}}
                   |    {{key}} - {{thing}}
                   |  {{/childEntry}}

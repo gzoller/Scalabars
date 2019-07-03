@@ -154,7 +154,7 @@ class MiscTests() extends FunSpec with Matchers {
       }
       it("PathParser") {
         val t = """{{/foo/#bogus}}"""
-        the[BarsException] thrownBy sb.compile(t)(json) should have message ("Template parsing failed: Parsed.Failure(Position 1:8, found \"#bogus}}\")")
+        the[BarsException] thrownBy sb.compile(t)(json) should have message "Template parsing failed: Parsed.Failure(Position 1:8, found \"#bogus}}\")"
       }
       it("HandlebarsParser") {
         val t = """This is a test  {  foo {{"""
@@ -164,7 +164,7 @@ class MiscTests() extends FunSpec with Matchers {
         sb.compile("""This is {""").compiled.head.asInstanceOf[model.renderables.Text].s should be("This is {")
       }
       it("UrlHelper") {
-        the[BarsException] thrownBy sb.compile("""This is my {{# with name}}Hey {{url "http://www.yahoo.com"}}{{/with}}""")(json) should have message ("UrlHelper must be used within an object context")
+        the[BarsException] thrownBy sb.compile("""This is my {{# with name}}Hey {{url "http://www.yahoo.com"}}{{/with}}""")(json) should have message "UrlHelper must be used within an object context"
       }
       it("Template") {
         sb.compile("foo{{this}}").toString should be("""Template:
@@ -183,7 +183,14 @@ class MiscTests() extends FunSpec with Matchers {
         sb.compile("""{{#if "false"}}A{{else}}B{{/if}}""")(json) should be("B")
       }
       it("Args") {
-        sb.compile("""{{with 12.34}}Hi {{this}}{{/with}}""")(json) should be("Hi 12.34")
+        sb.compile("""{{#with 12.34}}Hi {{this}}{{/with}}""")(json) should be("Hi 12.34")
+      }
+      it("Context") {
+        the[BarsException] thrownBy sb.compile("""{{../foo}}""")(json) should have message "Path cannot back up (..) beyond history: ../foo"
+        the[BarsException] thrownBy sb.compile("""{{name.bogus}}""")(json) should have message "Illegal attempt to reference a field on a non-object: name.bogus"
+        val c = model.Context.NotFound
+        c.flatten() should be(model.Context.NotFound)
+        the[BarsException] thrownBy sb.compile("""{{name.2}}""")(json) should have message "Can't index into a non-array in path: name.2"
       }
     }
   }

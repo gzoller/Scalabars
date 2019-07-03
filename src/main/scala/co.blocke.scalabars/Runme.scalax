@@ -36,7 +36,7 @@ object Runme extends App {
       |     Here {{@wow}}
       |{{/name}}""".stripMargin
 
-  println(sb.compile(t)(json))
+  println(sb.compile("""{{bogus}}""")(json))
 
   println("-----")
 

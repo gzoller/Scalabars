@@ -5,21 +5,9 @@ import org.json4s._
 import parsing.PathParser
 
 object Context {
-  val NotFound = Context(
-    "",
-    JNothing,
-    List.empty[Context],
-    Map.empty[String, EvalResult[_]],
-    Map.empty[String, Template],
-    Map.empty[String, Context])
+  val NotFound = Context("", JNothing, List.empty[Context], Map.empty[String, EvalResult[_]], Map.empty[String, Template], Map.empty[String, Context])
   def root(v: JValue) =
-    Context(
-      "/",
-      v,
-      List.empty[Context],
-      Map.empty[String, EvalResult[_]],
-      Map.empty[String, Template],
-      Map.empty[String, Context])
+    Context("/", v, List.empty[Context], Map.empty[String, EvalResult[_]], Map.empty[String, Template], Map.empty[String, Context])
   val pathParser = PathParser()
 }
 import Context._
@@ -34,7 +22,6 @@ case class Context(
 
   def setData(key: String, value: EvalResult[_]): Context =
     this.copy(data = this.data + (key -> value))
-  def setData(newAdds: Map[String, EvalResult[_]]): Context = this.copy(data = this.data ++ newAdds)
 
   def push(v: JValue, pathPart: String): Context =
     Context(bakePath(this, pathPart), v, this +: stack, this.data, this.partials, this.blockParams)
@@ -86,8 +73,7 @@ case class Context(
                 case jo: JObject if jo.values.contains(e) => ctx.push(jo \ e, e)
                 case _: JObject                           => NotFound.copy(path = bakePath(ctx, e))
                 case _ =>
-                  throw new BarsException(
-                    "Illegal attempt to reference a field on a non-object: " + unparsedPath)
+                  throw new BarsException("Illegal attempt to reference a field on a non-object: " + unparsedPath)
               }
           }
       }

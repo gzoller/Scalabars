@@ -6,12 +6,12 @@ import renderables._
 import co.blocke.listzipper.mutable.ListZipper
 
 /**
- * A whole lot of cleaning up:
- *   * Remove double WS that can happen when 2 tags are next to each other (each tag is guaranteed to have a before/after WS at parse time)
- *   * Determine if tags are alone on their line
- *   * If a tag is alone on a line, pre-clip WS before/after the tag
- *   * Wire parent for PartialHelper
- */
+  * A whole lot of cleaning up:
+  *   * Remove double WS that can happen when 2 tags are next to each other (each tag is guaranteed to have a before/after WS at parse time)
+  *   * Determine if tags are alone on their line
+  *   * If a tag is alone on a line, pre-clip WS before/after the tag
+  *   * Wire parent for PartialHelper
+  */
 object PostParse {
   def clean(seq: Seq[Renderable]): Seq[Renderable] = {
     val zipper = ListZipper(seq)
@@ -44,16 +44,16 @@ object PostParse {
               // Partial tags clip... non-partial, non-block tags don't
               val clearBefore = zipper.index == 0 || (zipper.prevAs[Whitespace] match {
                 case Some(ws) if zipper.index == 1 || ws.ws.contains("\n") || ws.isClipped => true
-                case _ => false
+                case _                                                                     => false
               })
               val clearAfter = zipper.nextAs[Whitespace] match {
                 case Some(ws) if ws.ws.contains("\n") || ws.isClipped => true
-                case _ => false
+                case _                                                => false
               }
               val aloneOnLine = clearBefore && clearAfter
 
               var beforeFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
-              var afterFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
+              var afterFn: Option[ListZipper[Renderable] => ListZipper[Renderable]]  = None
 
               if (aloneOnLine) {
                 beforeFn = Some(clipOpenBefore)
@@ -79,7 +79,7 @@ object PostParse {
                 flushCloseAfter(zipper)
               (otherHelper, false)
           }
-          zipper.modify(ht.copy(helper      = helper, aloneOnLine = alone))
+          zipper.modify(ht.copy(helper = helper, aloneOnLine = alone))
 
         case _ => // do nothing
       }
@@ -91,7 +91,7 @@ object PostParse {
   private def cleanOpenTag[T](z: ListZipper[Renderable], body: Block): T = {
     val clearBefore = z.index == 0 || (z.prevAs[Whitespace] match {
       case Some(ws) if z.index == 1 || ws.ws.contains("\n") || ws.isClipped => true
-      case _ => false
+      case _                                                                => false
     })
     val clearAfter = body.body.head match {
       case ws: Whitespace if ws.ws.contains("\n") || ws.isClipped =>
@@ -101,7 +101,7 @@ object PostParse {
     val aloneOnLine = clearBefore && clearAfter
 
     var beforeFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
-    var afterFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
+    var afterFn: Option[ListZipper[Renderable] => ListZipper[Renderable]]  = None
 
     if (aloneOnLine) {
       beforeFn = Some(clipOpenBefore)
@@ -122,16 +122,16 @@ object PostParse {
   private def cleanCloseTag[T](z: ListZipper[Renderable], body: Block): T = {
     val clearBefore = body.body.last match {
       case ws: Whitespace if ws.ws.contains("\n") || ws.isClipped => true
-      case _ => false
+      case _                                                      => false
     }
     val clearAfter = z.nextAs[Whitespace] match {
       case Some(ws) if ws.ws.contains("\n") || ws.isClipped => true
-      case _ => false
+      case _                                                => false
     }
     val aloneOnLine = clearBefore && clearAfter
 
     var beforeFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
-    var afterFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
+    var afterFn: Option[ListZipper[Renderable] => ListZipper[Renderable]]  = None
 
     if (aloneOnLine) {
       beforeFn = Some(clipCloseBefore)
@@ -215,17 +215,17 @@ object PostParse {
   private def clipOpenAfter(z: ListZipper[Renderable]): ListZipper[Renderable] = { // ws inside body
     z.focus.get match {
       case bh: BlockHelper =>
-        val subzipper = ListZipper(bh.body.body)
-        val ws = subzipper.focusAs[Whitespace].get
+        val subzipper            = ListZipper(bh.body.body)
+        val ws                   = subzipper.focusAs[Whitespace].get
         val (trimmed, isClipped) = clipToNextNL(ws.ws)
-        subzipper.modify(ws.copy(ws        = trimmed, isClipped = ws.isClipped | isClipped)) // copy--don't create new Whitespace
+        subzipper.modify(ws.copy(ws = trimmed, isClipped = ws.isClipped | isClipped)) // copy--don't create new Whitespace
         z.modify(bh.copy(body = bh.body.copy(body = subzipper.toList)))
 
       case ih: InlinePartialTag =>
-        val subzipper = ListZipper(ih.body.body)
-        val ws = subzipper.focusAs[Whitespace].get
+        val subzipper            = ListZipper(ih.body.body)
+        val ws                   = subzipper.focusAs[Whitespace].get
         val (trimmed, isClipped) = clipToNextNL(ws.ws)
-        subzipper.modify(ws.copy(ws        = trimmed, isClipped = ws.isClipped | isClipped))
+        subzipper.modify(ws.copy(ws = trimmed, isClipped = ws.isClipped | isClipped))
         z.modify(ih.copy(body = ih.body.copy(body = subzipper.toList)))
     }
   }
@@ -234,7 +234,7 @@ object PostParse {
     z.focus.get match {
       case bh: BlockHelper =>
         val subzipper = ListZipper(bh.body.body).last
-        val ws = subzipper.focusAs[Whitespace].get
+        val ws        = subzipper.focusAs[Whitespace].get
         if (!ws.ws.contains("\n") && ws.isClipped)
           // Already clipped, and we can't be in this function unless tag is alone-on-line, so just eliminate the remaining ws
           subzipper.delete
@@ -245,9 +245,8 @@ object PostParse {
         z.modify(bh.copy(body = bh.body.copy(body = subzipper.toList)))
 
       case ih: InlinePartialTag =>
-        val subzipper = ListZipper(ih.body.body).last
-        val (trimmed, cut, isClipped) = clipToLastNL(
-          subzipper.focus.get.asInstanceOf[Whitespace].ws)
+        val subzipper                 = ListZipper(ih.body.body).last
+        val (trimmed, cut, isClipped) = clipToLastNL(subzipper.focus.get.asInstanceOf[Whitespace].ws)
         subzipper.modify(Whitespace(trimmed, cut, isClipped))
         z.modify(ih.copy(body = ih.body.copy(body = subzipper.toList)))
     }
@@ -255,22 +254,26 @@ object PostParse {
 
   private def clipCloseAfter(z: ListZipper[Renderable]): ListZipper[Renderable] = {
     z.moveRight
-    val ws = z.focusAs[Whitespace].get
+    val ws                   = z.focusAs[Whitespace].get
     val (trimmed, isClipped) = clipToNextNL(ws.ws)
-    z.modify(ws.copy(ws        = trimmed, isClipped = ws.isClipped | isClipped))
+    z.modify(ws.copy(ws = trimmed, isClipped = ws.isClipped | isClipped))
     z.moveLeft
   }
 
   private def clipToNextNL(s: String): (String, Boolean) = // Return (fixed string, clipped part minus newline)
     s.indexOf('\n') match {
+      // $COVERAGE-OFF$Never seems to be triggered---left in as a safety
       case -1 => (s, false)
+      // $COVERAGE-ON$
       case i =>
         (s.drop(i + 1), true)
     }
 
   private def clipToLastNL(s: String): (String, String, Boolean) = // Return (fixed string, clipped part minus newline)
     s.lastIndexOf('\n') match {
+      // $COVERAGE-OFF$Never seems to be triggered---left in as a safety
       case -1 => (s, "", false)
+      // $COVERAGE-ON$
       case i =>
         val fixed = s.take(i + 1)
         (fixed, s.diff(fixed), true)

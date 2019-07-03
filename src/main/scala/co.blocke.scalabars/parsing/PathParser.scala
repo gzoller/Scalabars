@@ -45,7 +45,9 @@ case class PathParser() {
     parse(input, path(_)) match {
       case Parsed.Success(value, _) => value._2
       case f @ Parsed.Failure(label, index, extra) =>
+        // $COVERAGE-OFF$Should Never Happen(tm) -- parser shouldn't allow parsing of unparsable path, but left here as a safety in case...
         throw new BarsException("Path parsing failed: " + f.toString)
+      // $COVERAGE-ON$
     }
   }
 }

@@ -218,11 +218,7 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
         // Now backtrack over any whitespace
         var k = foundBraces - 1
         while (k >= start && ctx.input(k).isWhitespace) k -= 1
-        if (k < start)
-          ctx.freshFailure()
-        else {
-          ctx.freshSuccess(Seq(Text(ctx.input.slice(start, Math.max(0, k) + 1)), Whitespace(ctx.input.slice(k + 1, foundBraces))), foundBraces)
-        }
+        ctx.freshSuccess(Seq(Text(ctx.input.slice(start, Math.max(0, k) + 1)), Whitespace(ctx.input.slice(k + 1, foundBraces))), foundBraces)
       } else
         ctx.freshSuccess(Seq(Text(ctx.input.slice(start, ctx.input.length))), ctx.input.length) // take rest of string...no "{{" found
     }

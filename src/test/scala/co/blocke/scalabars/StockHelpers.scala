@@ -189,6 +189,7 @@ class StockHelpers() extends FunSpec with Matchers {
       sb.compile("{{#with foo.bar}}{{hey}}, {{ha}}{{/with}}")(data2) should equal("Hello, world")
 
       val data3 = org.json4s.native.JsonMethods.parse("""{
+                                                        |  "boom": "foo",
                                                         |  "foo": {
                                                         |    "bar": {
                                                         |      "moo": "Hello"
@@ -198,12 +199,16 @@ class StockHelpers() extends FunSpec with Matchers {
                                                         |}
         """.stripMargin)
       sb.compile("{{#with foo.bar}}{{moo}}, {{../bar}}{{/with}}")(data3) should equal("Hello, world")
+      sb.compile("{{#with foo.bar as |x|}}{{moo}}, {{x.moo}}{{../bar}}{{/with}}")(data3) should equal("Hello, Helloworld")
 
       sb.compile("{{#with 0}}Current context:{{.}}{{/with}}")("") should equal("Current context:0")
       sb.compile("{{#with 1}}Current context:{{.}}{{/with}}")("") should equal("Current context:1")
       sb.compile("{{#with .}}Current context:{{.}}{{/with}}")(List.empty[String]) should equal("")
       sb.compile("{{#with false}}Current context:{{.}}{{/with}}")(List.empty[String]) should equal("")
       sb.compile("""{{#with true}}Current context:{{.}}{{/with}}""")(List.empty[String]) should equal("Current context:")
+
+      sb.compile("""{{#with (lookup . "boom") as |x|}}Here {{x.bar.moo}}{{/with}}""")(data3) should be("Here Hello")
+      sb.compile("""{{#with 0 as |x|}}Here {{x}}{{/with}}""")(data3) should be("Here 0")
     }
     it("unless") {
       sb.compile("""Hello, {{#unless A}}here{{else}}missing{{/unless}} End!""")(c) should be("Hello, missing End!")

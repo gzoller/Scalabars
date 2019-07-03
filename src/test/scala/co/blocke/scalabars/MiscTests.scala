@@ -161,6 +161,7 @@ class MiscTests() extends FunSpec with Matchers {
         sb.compile(t).compiled.head.asInstanceOf[model.renderables.Text].s should be("This is a test  {  foo")
         val t2 = """This is a test"""
         sb.compile(t2).compiled.head.asInstanceOf[model.renderables.Text].s should be("This is a test")
+        sb.compile("""This is {""").compiled.head.asInstanceOf[model.renderables.Text].s should be("This is {")
       }
       it("UrlHelper") {
         the[BarsException] thrownBy sb.compile("""This is my {{# with name}}Hey {{url "http://www.yahoo.com"}}{{/with}}""")(json) should have message ("UrlHelper must be used within an object context")

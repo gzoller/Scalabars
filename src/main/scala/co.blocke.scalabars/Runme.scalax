@@ -31,33 +31,11 @@ object Runme extends App {
                                                    |  "stuff":["a","b","c"]
                                                    |}""".stripMargin)
 
-  val js2 = org.json4s.native.JsonMethods.parse("""{
-                                                  |  "stuff": [
-                                                  |    [
-                                                  |      {
-                                                  |      "name": "Greg",
-                                                  |      "age": 53
-                                                  |      },
-                                                  |      {
-                                                  |      "name": "Lili",
-                                                  |      "age": 44
-                                                  |      }
-                                                  |    ],
-                                                  |    [
-                                                  |      {
-                                                  |      "name": "Mike",
-                                                  |      "age": 34
-                                                  |      },
-                                                  |      {
-                                                  |      "name": "Sally",
-                                                  |      "age": 33
-                                                  |      }
-                                                  |    ]
-                                                  |  ]
-                                                  |}""".stripMargin)
+  val t =
+    """   {{this}}     
+      | foo""".stripMargin
 
-  val c2 = Data("Greg", "<p>Yay!</p>", 15, false, 2L, List.empty[Desc], Person("Mike", 32))
-  println(sb.compile("""Hello, {{#withLast A}}thing {{this.heavy}}{{/withLast}} End!""")(c2))
+  println(sb.compile(t)(json))
 
   println("-----")
 

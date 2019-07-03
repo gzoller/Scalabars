@@ -66,12 +66,14 @@ class AdditionalHelpers() extends FunSpec with Matchers {
       it("withDrop") {
         sb.compile("""{{#withDrop collection 1}}after: {{this}} {{/withDrop}}""")(listData) should be("after: Fry after: Bender ")
         sb.compile("""{{#withDrop object 1}}after: {{this}} {{else}}nope{{/withDrop}}""")(objData) should be("nope")
+        sb.compile("""{{#withDrop bogus 1}}after: {{this}} {{else}}nope{{/withDrop}}""")(objData) should be("nope")
         sb.compile("""{{#withDrop collection true}}after: {{this}} {{else}}nope{{/withDrop}}""")(listData) should be("nope")
         sb.compile("""{{#withDrop collection true}}after: {{this}} {{/withDrop}}""")(listData) should be("")
       }
       it("withTake") {
         sb.compile("""{{#withTake collection 1}}before: {{this}} {{/withTake}}""")(listData) should be("before: Professor Farnsworth ")
-        sb.compile("""{{#withTake object 1}}before: {{this}} {{else}}nope{{/withTake}}""")(listData) should be("nope")
+        sb.compile("""{{#withTake bogus 1}}before: {{this}} {{else}}nope{{/withTake}}""")(listData) should be("nope")
+        sb.compile("""{{#withTake object 1}}before: {{this}} {{else}}nope{{/withTake}}""")(objData) should be("nope")
         sb.compile("""{{#withTake collection true}}before: {{this}} {{else}}nope{{/withTake}}""")(listData) should be("nope")
         sb.compile("""{{#withTake collection true}}before: {{this}} {{/withTake}}""")(listData) should be("")
       }

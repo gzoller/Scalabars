@@ -14,10 +14,13 @@ case class WithTakeHelper() extends Helper("items", "loc") {
             c.value match {
               case a: JArray =>
                 a.arr.take(loc).indices.map(i => options.fn(lookup(c.path, s"[$i]"))).mkString
-              case _ => options.inverse()
+              case _ =>
+                options.inverse()
             }
-          case None => options.inverse()
+          case None =>
+            options.inverse()
         }
-      case _ => options.inverse()
+      case _ =>
+        options.inverse()
     }
 }

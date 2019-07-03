@@ -13,8 +13,10 @@ case class WithHelper() extends Helper("target") {
           case JNothing                           => newOpts.inverse()
           case jo: JObject if jo.children.isEmpty => newOpts.inverse()
           case a: JArray if a.arr.isEmpty         => newOpts.inverse()
-          case s: JString if s.values == "false"  => newOpts.inverse()
-          case _ if options.blockParams.isEmpty   => newOpts.fn(pre.value)
+          case s: JString if s.values == "false" =>
+            println("Yip")
+            newOpts.inverse()
+          case _ if options.blockParams.isEmpty => newOpts.fn(pre.value)
           case _ if options.blockParams.isEmpty =>
             newOpts.fn(pre.value, Map.empty[String, EvalResult[_]], Map(options.blockParams.head -> pre.value))
         }

@@ -16,7 +16,8 @@ case class WithDropHelper() extends Helper("items", "loc") {
                 a.arr.drop(loc).indices.map(i => options.fn(lookup(c.path, s"[${i + loc}]"))).mkString
               case _ => options.inverse()
             }
-          case None => options.inverse()
+          case None =>
+            options.inverse()
         }
       case _ => options.inverse()
     }

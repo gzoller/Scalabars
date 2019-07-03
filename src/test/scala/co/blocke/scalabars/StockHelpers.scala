@@ -8,14 +8,7 @@ class StockHelpers() extends FunSpec with Matchers {
 
   val sb = Scalabars()
 
-  val c = Data(
-    "Greg",
-    "<p>Yay!</p>",
-    15,
-    false,
-    2L,
-    List(Desc("cool"), Desc("wicked")),
-    Person("Mike", 32))
+  val c = Data("Greg", "<p>Yay!</p>", 15, false, 2L, List(Desc("cool"), Desc("wicked")), Person("Mike", 32))
   val c2 = Data("Greg", "<p>Yay!</p>", 15, false, 2L, List.empty[Desc], Person("Mike", 32))
   val c3 = Magic("Mike", Map.empty[String, Int])
   val objData = Map("object" -> Map("one" -> 1, "two" -> 2), "mt" -> Map.empty[String, Int])
@@ -82,25 +75,20 @@ class StockHelpers() extends FunSpec with Matchers {
   }
   describe("---------------------------\n:  Stock Builtin Helpers  :\n---------------------------") {
     it("each") {
-      sb.compile("""Hello, {{#each A}}Is this {{heavy}}?{{/each}} End!""")(c) should be(
-        "Hello, Is this cool?Is this wicked? End!")
-      sb.compile("""Hello, {{#each A}}Is this {{heavy}}?{{/each}} End!""")(c2) should be(
-        "Hello,  End!")
-      sb.compile("""Hello, {{#each A}}here{{else}}missing{{/each}} End!""")(c2) should be(
-        "Hello, missing End!")
+      sb.compile("""Hello, {{#each A}}Is this {{heavy}}?{{/each}} End!""")(c) should be("Hello, Is this cool?Is this wicked? End!")
+      sb.compile("""Hello, {{#each A}}Is this {{heavy}}?{{/each}} End!""")(c2) should be("Hello,  End!")
+      sb.compile("""Hello, {{#each A}}here{{else}}missing{{/each}} End!""")(c2) should be("Hello, missing End!")
 
       // With @index var
       sb.compile("""{{#each collection}}{{this}} is {{@index}} {{else}}nope{{/each}}""")(listData) should be(
         "Professor Farnsworth is 0 Fry is 1 Bender is 2 ")
 
       // With @first and @last var
-      sb.compile(
-        """{{#each collection}}{{this}} is {{@index}} {{#if @first}}First!{{else if @last}}Last!{{else}}(normal){{/if}}{{/each}}""")(
-          listData) should be("Professor Farnsworth is 0 First!Fry is 1 (normal)Bender is 2 Last!")
+      sb.compile("""{{#each collection}}{{this}} is {{@index}} {{#if @first}}First!{{else if @last}}Last!{{else}}(normal){{/if}}{{/each}}""")(
+        listData) should be("Professor Farnsworth is 0 First!Fry is 1 (normal)Bender is 2 Last!")
 
       // With @key var (objects)
-      sb.compile("""{{#each object}}{{@key}} - {{this}} {{else}}nope{{/each}}""")(objData) should be(
-        "one - 1 two - 2 ")
+      sb.compile("""{{#each object}}{{@key}} - {{this}} {{else}}nope{{/each}}""")(objData) should be("one - 1 two - 2 ")
 
       // From Handlebars Cookbook
       val json = org.json4s.native.JsonMethods.parse("""{
@@ -142,14 +130,10 @@ class StockHelpers() extends FunSpec with Matchers {
                                                                     |""".stripMargin)
     }
     it("if") {
-      sb.compile("""Hello, {{#if A}}here{{else}}missing{{/if}} End!""")(c) should be(
-        "Hello, here End!")
-      sb.compile("""Hello, {{#if isOK}}here{{else}}missing{{/if}} End!""")(c) should be(
-        "Hello, missing End!")
-      sb.compile("""Hello, {{#if bogus}}here{{else}}missing{{/if}} End!""")(c) should be(
-        "Hello, missing End!")
-      sb.compile("""Hello, {{#if stuff}}here{{else}}missing{{/if}} End!""")(c3) should be(
-        "Hello, missing End!")
+      sb.compile("""Hello, {{#if A}}here{{else}}missing{{/if}} End!""")(c) should be("Hello, here End!")
+      sb.compile("""Hello, {{#if isOK}}here{{else}}missing{{/if}} End!""")(c) should be("Hello, missing End!")
+      sb.compile("""Hello, {{#if bogus}}here{{else}}missing{{/if}} End!""")(c) should be("Hello, missing End!")
+      sb.compile("""Hello, {{#if stuff}}here{{else}}missing{{/if}} End!""")(c3) should be("Hello, missing End!")
 
       // From Handlebars Cookbook
       val data = org.json4s.native.JsonMethods.parse("""{
@@ -177,20 +161,14 @@ class StockHelpers() extends FunSpec with Matchers {
       sb.compile("""{{#if foo10}}YES{{else}}no{{/if}}""")(data) should equal("YES")
     }
     it("if compound else") {
-      sb.compile("""Hello, {{#if bogus}}here{{else if A}}foo{{else}}missing{{/if}} End!""")(c) should be(
-        "Hello, foo End!")
-      sb.compile("""Hello, {{#if bogus}}here{{else if X}}foo{{else}}missing{{/if}} End!""")(c) should be(
-        "Hello, missing End!")
-      sb.compile("""Hello, {{#if bogus}}here{{else if X}}foo{{^}}missing{{/if}} End!""")(c) should be(
-        "Hello, missing End!")
+      sb.compile("""Hello, {{#if bogus}}here{{else if A}}foo{{else}}missing{{/if}} End!""")(c) should be("Hello, foo End!")
+      sb.compile("""Hello, {{#if bogus}}here{{else if X}}foo{{else}}missing{{/if}} End!""")(c) should be("Hello, missing End!")
+      sb.compile("""Hello, {{#if bogus}}here{{else if X}}foo{{^}}missing{{/if}} End!""")(c) should be("Hello, missing End!")
     }
     it("with") {
-      sb.compile("""Hello, {{#with player}}Is this {{name}} or {{age}}?{{/with}}!""")(c) should be(
-        "Hello, Is this Mike or 32?!")
-      sb.compile("""Hello, {{#with bogus}}here{{else}}missing{{/with}}!""")(c2) should be(
-        "Hello, missing!")
-      sb.compile("""Hello, {{#with stuff}}here{{else}}missing{{/with}}!""")(c3) should be(
-        "Hello, missing!")
+      sb.compile("""Hello, {{#with player}}Is this {{name}} or {{age}}?{{/with}}!""")(c) should be("Hello, Is this Mike or 32?!")
+      sb.compile("""Hello, {{#with bogus}}here{{else}}missing{{/with}}!""")(c2) should be("Hello, missing!")
+      sb.compile("""Hello, {{#with stuff}}here{{else}}missing{{/with}}!""")(c3) should be("Hello, missing!")
 
       // From Handlebars Cookbook
       val data = org.json4s.native.JsonMethods.parse("""{
@@ -219,23 +197,19 @@ class StockHelpers() extends FunSpec with Matchers {
                                                         |  "bar": "world"
                                                         |}
         """.stripMargin)
-      sb.compile("{{#with foo.bar}}{{moo}}, {{../bar}}{{/with}}")(data3) should equal(
-        "Hello, world")
+      sb.compile("{{#with foo.bar}}{{moo}}, {{../bar}}{{/with}}")(data3) should equal("Hello, world")
 
       sb.compile("{{#with 0}}Current context:{{.}}{{/with}}")("") should equal("Current context:0")
       sb.compile("{{#with 1}}Current context:{{.}}{{/with}}")("") should equal("Current context:1")
       sb.compile("{{#with .}}Current context:{{.}}{{/with}}")(List.empty[String]) should equal("")
-      sb.compile("{{#with false}}Current context:{{.}}{{/with}}")(List.empty[String]) should equal(
-        "")
+      sb.compile("{{#with false}}Current context:{{.}}{{/with}}")(List.empty[String]) should equal("")
+      sb.compile("""{{#with true}}Current context:{{.}}{{/with}}""")(List.empty[String]) should equal("Current context:")
     }
     it("unless") {
-      sb.compile("""Hello, {{#unless A}}here{{else}}missing{{/unless}} End!""")(c) should be(
-        "Hello, missing End!")
-      sb.compile("""Hello, {{#unless bogus}}here{{else}}missing{{/unless}} End!""")(c) should be(
-        "Hello, here End!")
+      sb.compile("""Hello, {{#unless A}}here{{else}}missing{{/unless}} End!""")(c) should be("Hello, missing End!")
+      sb.compile("""Hello, {{#unless bogus}}here{{else}}missing{{/unless}} End!""")(c) should be("Hello, here End!")
       sb.compile("""Hello, {{#unless A}}here{{/unless}} End!""")(c) should be("Hello,  End!")
-      sb.compile("""Hello, {{#unless bogus}}here{{/unless}} End!""")(c) should be(
-        "Hello, here End!")
+      sb.compile("""Hello, {{#unless bogus}}here{{/unless}} End!""")(c) should be("Hello, here End!")
 
       // From Handlebars Cookbook
       val data = org.json4s.native.JsonMethods.parse("""{
@@ -285,10 +259,7 @@ class StockHelpers() extends FunSpec with Matchers {
                                           |second:World!
                                           |""".stripMargin)
 
-      val data2 = Stuff2(
-        Map("Hello" -> "first", "World" -> "second"),
-        Map("first" -> 1, "second" -> 2),
-        ">b<")
+      val data2 = Stuff2(Map("Hello" -> "first", "World" -> "second"), Map("first" -> 1, "second" -> 2), ">b<")
       val tO =
         """<b>here</b>
           |{{#each foo}}{{@key}}:{{.}} {{../thing}} => {{lookup ../bar .}}

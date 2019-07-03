@@ -134,6 +134,8 @@ class AdditionalHelpers() extends FunSpec with Matchers {
         }
         val sb2 = sb.setFileGetter(TestFileGetter())
         sb2.compile("""Hello, {{include "/any/path" this}}!""")(c) should be("Hello, Embed Greg!")
+        val sb3 = sb.setFileGetter(NoopFileGetter())
+        sb3.compile("""Hello, {{include "/any/path" this}}!""")(c) should be("Hello, !")
       }
     }
     describe("Comparisons") {

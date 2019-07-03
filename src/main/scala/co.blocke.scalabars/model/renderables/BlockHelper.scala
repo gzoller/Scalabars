@@ -29,19 +29,6 @@ case class BlockHelper(
   def eval(options: Options): EvalResult[_] =
     helper.run()(bakeBlockOptions(options), Map.empty[String, Template])
 
-  // Blocks render their content bodies by calling options.fn().  Worse... the code of the helper may iterate, calling fn()
-  // multiple times.  Whitespace must be managed each time, meaning we need to lift from the Helper.run() back up to the BlockHelperTag
-  // context to manage that.  Use an anonymouse function/closure for this.
-  val accumulator = (s: String, opts: Options) => {
-    // Split rendered string into WS::Text::WS
-    val wsTws = sliceToRenderables(s)
-    val rc = RenderControl(opts)
-    val stage1 = if (body.openTag.wsCtlAfter) rc.flushTrailing() else rc
-    val stage2 = wsTws.foldLeft(stage1) { case (rcX, renderable) => renderable.render(rcX) }
-    val stage3 = if (body.closeTag.wsCtlBefore) stage2.flushLeading() else stage2
-    stage3.out.toString + stage3.accumulatedWS
-  }
-
   // Do everything necessary to update Options before eval() on this helper.  Set up any current state
   // held in Options or to be passed down by parent.
   private def bakeBlockOptions(options: Options): Options = {
@@ -50,11 +37,7 @@ case class BlockHelper(
     val (fn, inv) = examineBlock(options)
 
     // Cook the newly populated Options
-    stage1Opts.copy(
-      blockParams = options.blockParams ++ blockParams.toList,
-      accumulator = accumulator,
-      _fn         = fn,
-      _inverse    = inv)
+    stage1Opts.copy(blockParams = options.blockParams ++ blockParams.toList, _fn = fn, _inverse = inv)
   }
 
   private def examineBlock(options: Options): (Template, Template) =

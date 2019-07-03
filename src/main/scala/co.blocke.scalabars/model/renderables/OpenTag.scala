@@ -10,8 +10,5 @@ case class OpenTag(
 ) extends Tag {
 
   // Manage ws ctl but output no content
-  def render(rc: RenderControl): RenderControl = {
-    val stage1 = if (wsCtlBefore) rc.flushLeading() else rc
-    if (wsCtlAfter) stage1.flushTrailing() else stage1
-  }
+  def render(rc: RenderControl): RenderControl = rc
 }

@@ -24,15 +24,15 @@ package object scalabars {
   lazy val sjJson = ScalaJack(Json4sFlavor())
   def toJson4s[T](t: T)(implicit tt: TypeTag[T]): JValue = sjJson.render(t)
 
-  def prefixPath(pathPart: String, rest: String) =
-    { if (pathPart == "/") "./" else pathPart } match {
-      case pp if rest == "" => pp
-      case pp if (pathPart.last == '/' || pathPart.last == '.') => rest match {
+  def prefixPath(pathPart: String, rest: String) = { if (pathPart == "/") "./" else pathPart } match {
+    case pp if rest == "" => pp
+    case pp if (pathPart.last == '/' || pathPart.last == '.') =>
+      rest match {
         case _ if rest.startsWith("/") || rest.startsWith(".") => pp + rest.tail
         case _ => pp + rest
       }
-      case pp => pp + "/" + rest
-    }
+    case pp => pp + "/" + rest
+  }
 
   /**
    * Unwrap layers within EvaluationResults to base Scala values for comparison
@@ -70,8 +70,10 @@ package object scalabars {
   implicit def null2evalResult(n: Null): EvalResult[_] = NoEvalResult()
   implicit def long2evalResult(i: Int): EvalResult[_] = LongEvalResult(i)
   implicit def double2evalResult(d: Double): EvalResult[_] = DoubleEvalResult(d)
-  implicit def list2evalResult(l: List[Any])(implicit partials: Map[String, Template]): EvalResult[_] = ContextEvalResult(Context.root(sjJson.render(l)).copy(partials = partials))
-  implicit def map2evalResult(m: Map[String, Any])(implicit partials: Map[String, Template]): EvalResult[_] = ContextEvalResult(Context.root(sjJson.render(m)).copy(partials = partials))
+  implicit def list2evalResult(l: List[Any])(implicit partials: Map[String, Template]): EvalResult[_] =
+    ContextEvalResult(Context.root(sjJson.render(l)).copy(partials = partials))
+  implicit def map2evalResult(m: Map[String, Any])(implicit partials: Map[String, Template]): EvalResult[_] =
+    ContextEvalResult(Context.root(sjJson.render(m)).copy(partials = partials))
   implicit def context2EvalResult(c: Context): EvalResult[_] = c.value match {
     case v: JBool   => BooleanEvalResult(v.values)
     case v: JInt    => LongEvalResult(v.values.toLong)

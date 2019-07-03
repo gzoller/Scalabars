@@ -25,5 +25,7 @@ case class Handlebars(private val scalabars: Scalabars) {
   }
 
   // Kinda dumb, for for compatibility in Scala...
+  // $COVERAGE-OFF$Don't really care about this one... maybe don't use it.
   def createFrame(data: Map[String, EvalResult[_]]): Map[String, EvalResult[_]] = Map[String, EvalResult[_]]() ++ data
+  // $COVERAGE-ON$
 }

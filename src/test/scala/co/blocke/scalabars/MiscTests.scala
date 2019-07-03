@@ -166,6 +166,25 @@ class MiscTests() extends FunSpec with Matchers {
       it("UrlHelper") {
         the[BarsException] thrownBy sb.compile("""This is my {{# with name}}Hey {{url "http://www.yahoo.com"}}{{/with}}""")(json) should have message ("UrlHelper must be used within an object context")
       }
+      it("Template") {
+        sb.compile("foo{{this}}").toString should be("""Template:
+                                                       |     Text(foo)
+                                                       |     Whitespace ||
+                                                       |     HelperTag this (PathHelper(this))
+                                                       |       args: List()
+                                                       |""".stripMargin)
+      }
+      it("Options") {
+        sb.compile("Foo{{this}}").compileOptions.toString should be(
+          """Options:
+            |   Hash = Map(noEscape -> false, strict -> false, preventIndent -> false, explicitPartialContext -> false)
+            |   Context = None""".stripMargin)
+
+        sb.compile("""{{#if "false"}}A{{else}}B{{/if}}""")(json) should be("B")
+      }
+      it("Args") {
+        sb.compile("""{{with 12.34}}Hi {{this}}{{/with}}""")(json) should be("Hi 12.34")
+      }
     }
   }
 }

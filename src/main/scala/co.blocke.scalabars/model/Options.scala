@@ -5,15 +5,14 @@ import org.json4s._
 
 case class Options(
     handlebars:  Scalabars,
-    context:     Context                     = Context.NotFound,
-    helperName:  String                      = "",
-    accumulator: (String, Options) => String = null, // *MUST* be set for a block (e.g. fn() calls)
-    blockParams: List[String]                = List.empty[String],
-    params:      List[EvalResult[_]]         = List.empty[EvalResult[_]],
-    paramValues: List[String]                = List.empty[String],
-    _fn:         Template                    = EmptyTemplate(),
-    _inverse:    Template                    = EmptyTemplate(),
-    _hash:       Map[String, EvalResult[_]]  = Map.empty[String, EvalResult[_]]
+    context:     Context                    = Context.NotFound,
+    helperName:  String                     = "",
+    blockParams: List[String]               = List.empty[String],
+    params:      List[EvalResult[_]]        = List.empty[EvalResult[_]],
+    paramValues: List[String]               = List.empty[String],
+    _fn:         Template                   = EmptyTemplate(),
+    _inverse:    Template                   = EmptyTemplate(),
+    _hash:       Map[String, EvalResult[_]] = Map.empty[String, EvalResult[_]]
 ) {
 
   // _hash() returns EvalResult for an intended future purpose so that you can sub-path off the result,
@@ -35,8 +34,6 @@ case class Options(
       blockParams: Map[String, Context]
   ): String = {
     _fn.render(c.copy(data        = data, blockParams = c.blockParams ++ blockParams))
-    //    val raw = _fn.render(c.copy(data        = data, blockParams = c.blockParams ++ blockParams))
-    //    accumulator(raw, this)
   }
 
   def inverse(): String = _inverse.render(context)
@@ -47,18 +44,15 @@ case class Options(
   def isFalsy(er: EvalResult[_]): Boolean = er match {
     case c: ContextEvalResult =>
       c.value.value match {
-        case b: JBool         => !b.value
-        case JNothing         => true
-        case a: JArray        => a.arr.isEmpty
-        case o: JObject       => o.children.isEmpty
-        case JString("false") => true
-        case null             => true
-        case _                => false
+        case b: JBool   => !b.value
+        case JNothing   => true
+        case a: JArray  => a.arr.isEmpty
+        case o: JObject => o.children.isEmpty
+        case _          => false
       }
     case StringEvalResult("false") => true
     case BooleanEvalResult(false)  => true
     case NoEvalResult()            => true
-    case null                      => true
     case _                         => false
   }
 

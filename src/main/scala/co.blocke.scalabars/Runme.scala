@@ -32,8 +32,9 @@ object Runme extends App {
                                                    |}""".stripMargin)
 
   val t =
-    """   {{this}}     
-      | foo""".stripMargin
+    """{{#name wow="yip"}}
+      |     Here {{@wow}}
+      |{{/name}}""".stripMargin
 
   println(sb.compile(t)(json))
 

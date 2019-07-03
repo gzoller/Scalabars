@@ -12,13 +12,10 @@ object Block {
         case List(ct: CloseTag, _*) =>
           val ct = stage1.head.asInstanceOf[CloseTag]
           Some(Block(ot, stage1.tail.reverse, ct))
-        case _ => None
       }
-    case _ => None
   }
 }
 
 case class Block(openTag: OpenTag, body: Seq[Renderable], closeTag: CloseTag) {
   def flatten: Seq[Renderable] = openTag +: body :+ closeTag
-  def toTemplate(opts: Options) = SBTemplate(flatten.toList, opts)
 }

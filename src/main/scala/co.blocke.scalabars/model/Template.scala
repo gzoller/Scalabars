@@ -12,7 +12,7 @@ trait Template {
     render(Context.root(dataObj).copy(partials = compileOptions.context.partials))
   def apply[T](dataObj: T)(implicit tt: TypeTag[T]): String = render(contextFromObj(dataObj))
 
-  def render(context: Context): String = ""
+  def render(context: Context): String
 
   def contextFromObj[T](obj: T)(implicit tt: TypeTag[T]): Context =
     Context.root(toJson4s(obj)).copy(partials = compileOptions.context.partials)
@@ -29,6 +29,7 @@ trait Template {
 case class EmptyTemplate() extends Template {
   val compileOptions: Options = null // Never used
   val compiled = List.empty[Renderable]
+  def render(context: Context): String = ""
 }
 
 case class SBTemplate(
@@ -36,7 +37,7 @@ case class SBTemplate(
     compileOptions: Options
 ) extends Template {
 
-  override def render(context: Context): String = {
+  def render(context: Context): String = {
     val startingOpts =
       // Need to clear out _fn and _template in case this is a nested template render... If it is, then this template's
       // render will arrive here (incorrectly) pre-populated with _fn/_inverse from the parent template, which isn't what we want.

@@ -22,10 +22,7 @@ case class PathHelper(path: String) extends Helper() {
           ParsedExpression("each", Seq(PathArgument(path))),
           3,
           Nil,
-          Block(
-            OpenTag(ParsedExpression("each", Seq(PathArgument(path))), false, false, 3),
-            fn.compiled ++ inv.compiled,
-            CloseTag(false, false, 3))
+          Block(OpenTag(ParsedExpression("each", Seq(PathArgument(path))), false, false, 3), fn.compiled ++ inv.compiled, CloseTag(false, false, 3))
         )
         syntheticEach.eval(options) //.copy(context = c))
 

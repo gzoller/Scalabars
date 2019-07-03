@@ -29,25 +29,8 @@ case class TagBuilder(
       case Some(">") | Some("#>") =>
         expr.exprArg match {
           // Sub-expression (expression in 1st position).  Create an ExpressionTag
-          case Some(e) =>
-            if (isBlock)
-              BlockHelper(
-                expr.name,
-                ExpressionHelper(e, true),
-                isInverted = false,
-                expr,
-                3,
-                blockParams,
-                body)
-            else
-              HelperTag(
-                expr.name,
-                ExpressionHelper(e, true),
-                expr,
-                wsCtlBefore,
-                wsCtlAfter,
-                3,
-                false)
+          case Some(e) => // can only be non-block.  (How would you close the tag if you hadn't resolved the expr?)
+            HelperTag(expr.name, ExpressionHelper(e, true), expr, wsCtlBefore, wsCtlAfter, 3, false)
           // Non-expression tag.  Use expr.name and build the PartialTag
           case None =>
             val partialHelper = sb.getPartial(expr.name) match {
@@ -62,42 +45,12 @@ case class TagBuilder(
         }
 
       case Some("#") => // Blocks
-        expr.exprArg match {
-          // Sub-expression (expression in 1st position).  Create an ExpressionTag
-          case Some(e) =>
-            BlockHelper(
-              expr.name,
-              ExpressionHelper(e, false),
-              isInverted = false,
-              expr,
-              3,
-              blockParams,
-              body)
-
-          // Non-expression tag.  Use expr.name and build the HelperTag
-          case None =>
-            val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name))
-            BlockHelper(expr.name, helper, isInverted = false, expr, arity, blockParams, body)
-
-        }
+        val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name))
+        BlockHelper(expr.name, helper, isInverted = false, expr, arity, blockParams, body)
 
       case Some("^") => // Inverted Helper (fn & inverse are reversed, but otherwise the same as normal Helper)
-        expr.exprArg match {
-          // Sub-expression (expression in 1st position).  Create an ExpressionTag
-          case Some(e) =>
-            BlockHelper(
-              expr.name,
-              ExpressionHelper(e, false),
-              isInverted = false,
-              expr,
-              3,
-              blockParams,
-              body)
-          // Non-expression tag.  Use expr.name and build the HelperTag
-          case None =>
-            val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name))
-            BlockHelper(expr.name, helper, isInverted = true, expr, arity, blockParams, body)
-        }
+        val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name))
+        BlockHelper(expr.name, helper, isInverted = true, expr, arity, blockParams, body)
 
       case _ if arity == 4 => // raw block (which strangely don't require a '#' char.  Hmm...
         val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name)) // resolve to either known non-block helper, or fall back to assuming its a path

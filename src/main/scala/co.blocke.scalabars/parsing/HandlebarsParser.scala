@@ -71,10 +71,7 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
               .rep(min = stage2.arity, max = stage2.arity) ~ whitespace.?)
               .map {
                 case (blockParams, wsCtlAfter, trailingWS) =>
-                  stage2.copy(
-                    blockParams = blockParams.getOrElse(Seq.empty[String]),
-                    wsCtlAfter  = wsCtlAfter.isDefined,
-                    trailingWS  = trailingWS)
+                  stage2.copy(blockParams = blockParams.getOrElse(Seq.empty[String]), wsCtlAfter = wsCtlAfter.isDefined, trailingWS = trailingWS)
               }
           case _ =>
             (spacesOrNL ~/ wsctl.? ~ spacesOrNL ~ "}"
@@ -88,10 +85,7 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
         // Finally, pick up any tag body contents (if block tag)
         stage4 <- stage3.isBlock match {
           case true if stage3.arity < 4 =>
-            P(
-              (!closeBlock(stage3.arity, stage3.expr.name) ~/ renderable).rep ~ whitespace.? ~ closeBlock(
-                stage3.arity,
-                stage3.expr.name) ~ whitespace.?)
+            P((!closeBlock(stage3.arity, stage3.expr.name) ~/ renderable).rep ~ whitespace.? ~ closeBlock(stage3.arity, stage3.expr.name) ~ whitespace.?)
               .map {
                 case (contents, ws3, closeBlock, ws4) =>
                   // Finalize any tags that may be inside block
@@ -118,10 +112,7 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
                   stage3.copy(body       = body, trailingWS = ws4)
               }
           case true if stage3.arity == 4 => // raw block
-            P(
-              (!closeBlock(stage3.arity, stage3.expr.name) ~ AnyChar).rep.! ~ closeBlock(
-                stage3.arity,
-                stage3.expr.name) ~ whitespace.?)
+            P((!closeBlock(stage3.arity, stage3.expr.name) ~ AnyChar).rep.! ~ closeBlock(stage3.arity, stage3.expr.name) ~ whitespace.?)
               .map {
                 case (raw, closeBlock, trailingWS) =>
                   val body = Block(
@@ -171,8 +162,7 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
     P("true" | "false" | "null" | "undefined" | number).!.map(r => LiteralArgument(r))
   private def number[_: P] = P(("-".? ~~ CharsWhileIn("0-9") ~~ ("." ~~ CharsWhileIn("0-9")).?).!)
   private def stringArg[_: P] =
-    P("\"" ~~ CharsWhile(_ != '"').! ~~ "\"" | "'" ~~ CharsWhile(_ != '\'').! ~~ "'").map(r =>
-      StringArgument(r))
+    P("\"" ~~ CharsWhile(_ != '"').! ~~ "\"" | "'" ~~ CharsWhile(_ != '\'').! ~~ "'").map(r => StringArgument(r))
   private def pathArg[_: P] = P(!"as" ~ unparsedPath).map(p => PathArgument(p))
   private def exprArg[_: P] =
     P("(" ~ spacesOrNL ~ simpleExpr ~ spacesOrNL ~ ")")
@@ -181,9 +171,7 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
           .asInstanceOf[HelperTag]))
 
   private def literalArg[_: P] =
-    P(
-      "true" | "false" | "null" | "undefined" | "-".? ~~ CharsWhile(_.isDigit) ~~ ("." ~~ CharsWhile(
-        _.isDigit)).?).!.map(r => StringArgument(r))
+    P("true" | "false" | "null" | "undefined" | "-".? ~~ CharsWhile(_.isDigit) ~~ ("." ~~ CharsWhile(_.isDigit)).?).!.map(r => StringArgument(r))
   private def assignmentArg[_: P] =
     P(label ~ "=" ~ P(literalArg | pathArg | stringArg)).map(r => AssignmentArgument(r._1, r._2))
   private def label[_: P]: P[String] = CharsWhileIn("""_a-zA-Z0-9""").repX(1).!
@@ -217,23 +205,26 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
           Some(i)
       }
 
-      findDoubleBrace(start) match {
-        case Some(p) =>
-          // Now backtrack over any whitespace
-          var k = p - 1
-          while (k >= 0 && k >= start && ctx.input(k).isWhitespace) k -= 1
-          if (k < 0)
-            ctx.freshFailure()
-          else {
-            ctx.freshSuccess(
-              Seq(
-                Text(ctx.input.slice(start, Math.max(0, k) + 1)),
-                Whitespace(ctx.input.slice(k + 1, p))),
-              p)
-          }
-        case None =>
-          ctx.freshSuccess(Seq(Text(ctx.input.slice(start, ctx.input.length))), ctx.input.length) // take rest of string...no "{{" found
-      }
+      val foundBraces = findDoubleBrace(start)
+        .map(
+          found =>
+            if (found == start)
+              findDoubleBrace(start + 2).getOrElse(-1)
+            else
+              found)
+        .getOrElse(-1)
+
+      if (foundBraces >= 0) {
+        // Now backtrack over any whitespace
+        var k = foundBraces - 1
+        while (k >= start && ctx.input(k).isWhitespace) k -= 1
+        if (k < start)
+          ctx.freshFailure()
+        else {
+          ctx.freshSuccess(Seq(Text(ctx.input.slice(start, Math.max(0, k) + 1)), Whitespace(ctx.input.slice(k + 1, foundBraces))), foundBraces)
+        }
+      } else
+        ctx.freshSuccess(Seq(Text(ctx.input.slice(start, ctx.input.length))), ctx.input.length) // take rest of string...no "{{" found
     }
   }
 

@@ -10,6 +10,7 @@ object Runme extends App {
                                                    |{
                                                    |  "title": "My New Post",
                                                    |  "name": "Greg",
+                                                   |  "thing": "name",
                                                    |  "age": 53,
                                                    |  "ok": true,
                                                    |  "interests": [{
@@ -55,13 +56,8 @@ object Runme extends App {
                                                   |  ]
                                                   |}""".stripMargin)
 
-  val t = """{{#each stuff}}
-            |{{#each this}}
-            |  {{@../index}}  {{this.name}}
-            |{{/each}}
-            |{{/each}}""".stripMargin
-
-  println(sb.compile(t)(js2))
+  val c2 = Data("Greg", "<p>Yay!</p>", 15, false, 2L, List.empty[Desc], Person("Mike", 32))
+  println(sb.compile("""Hello, {{#withLast A}}thing {{this.heavy}}{{/withLast}} End!""")(c2))
 
   println("-----")
 

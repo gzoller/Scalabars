@@ -28,8 +28,8 @@ object Scalabars {
       "first" -> FirstHelper(),
       "last" -> LastHelper(),
       "empty" -> EmptyHelper(),
-      "withBefore" -> WithBeforeHelper(),
-      "withAfter" -> WithAfterHelper(),
+      "withTake" -> WithTakeHelper(),
+      "withDrop" -> WithDropHelper(),
       "withFirst" -> WithFirstHelper(),
       "withLast" -> WithLastHelper(),
       "contains" -> ContainsHelper(),
@@ -88,25 +88,16 @@ case class Scalabars(
       name,
       PartialHelper(
         name,
-        template.copy(compiled = OpenTag(
-          ParsedExpression(name),
-          false,
-          false,
-          3) +: template.compiled :+ CloseTag(false, false, 3))))
+        template.copy(compiled = OpenTag(ParsedExpression(name), false, false, 3) +: template.compiled :+ CloseTag(false, false, 3))))
     this
   }
 
   def setFileGetter(fileGetter: FileGetter) = this.copy(fileGetter = fileGetter)
 
-  def compile(
-      rawTemplate:    String,
-      compileOptions: Map[String, Boolean] = Map.empty[String, Boolean]) = {
+  def compile(rawTemplate: String, compileOptions: Map[String, Boolean] = Map.empty[String, Boolean]) = {
     val hashArgs = stockOptions ++ compileOptions.map { case (k, v) => (k, BooleanEvalResult(v)) }
     SBTemplate(parser.compile(rawTemplate).toList, Options(this, _hash = hashArgs))
   }
-
-  private[scalabars] def _compileFromContents(contents: Seq[Renderable]) =
-    SBTemplate(contents.toList, Options(this, _hash = stockOptions))
 
   private[scalabars] def getHelper(name: String): Option[Helper] = helpers.get(name)
   private[scalabars] def getPartial(name: String) = partials.get(name)

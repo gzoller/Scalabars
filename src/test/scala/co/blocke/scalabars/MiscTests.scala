@@ -30,8 +30,7 @@ class MiscTests() extends FunSpec with Matchers {
 
   describe("----------------\n:  Misc Tests  :\n----------------") {
     it("Raw block") {
-      sb.compile("""{{{{raw}}}}This is a {{great}} test!{{{{/raw}}}}""")(json) should be(
-        "This is a {{great}} test!")
+      sb.compile("""{{{{raw}}}}This is a {{great}} test!{{{{/raw}}}}""")(json) should be("This is a {{great}} test!")
     }
     it("Escaping with {{{ }}}") {
       sb.compile("""Hello {{{html}}}""")(json) should be("Hello <b>Big</b>")
@@ -138,6 +137,25 @@ class MiscTests() extends FunSpec with Matchers {
         sb.compile(t)(json) should be("""Kid:     name - toy
                                         |Kid:     value - boat
                                         |""".stripMargin)
+      }
+    }
+    describe("--------------\n:  Coverage  :\n--------------") {
+      it("Scalabars") {
+        sb.toString should be(
+          "Scalabars(helpers=[lookup,lengthEquals,any,empty,join,url,if,withLookup,sortEach,else,withTake,or,each,last,raw,withDrop,default,unless,with,first,include,length,withFirst,withLast,contains,ne,eq,and,markdown])")
+      }
+      it("PathParser") {
+        val t = """{{/foo/#bogus}}"""
+        the[BarsException] thrownBy sb.compile(t)(json) should have message ("Template parsing failed: Parsed.Failure(Position 1:8, found \"#bogus}}\")")
+      }
+      it("HandlebarsParser") {
+        val t = """This is a test  {  foo {{"""
+        sb.compile(t).compiled.head.asInstanceOf[model.renderables.Text].s should be("This is a test  {  foo")
+        val t2 = """This is a test"""
+        sb.compile(t2).compiled.head.asInstanceOf[model.renderables.Text].s should be("This is a test")
+      }
+      it("UrlHelper") {
+        the[BarsException] thrownBy sb.compile("""This is my {{# with name}}Hey {{url "http://www.yahoo.com"}}{{/with}}""")(json) should have message ("UrlHelper must be used within an object context")
       }
     }
   }

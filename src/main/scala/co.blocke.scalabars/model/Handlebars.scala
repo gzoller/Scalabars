@@ -5,11 +5,6 @@ import org.apache.commons.text.StringEscapeUtils
 import collection.JavaConverters._
 import org.graalvm.polyglot.Value
 
-// TODO:  Likely want 2 Handlebars objects...
-// TODO:    One for Scala, which isn't really needed but will make native helper authors feel at home
-// TODO:    The second one in pure Javascript so we can do things like: new SafeString()
-// TODO:      --> Maybe there's a hidden Scala handlebars thing that JS Handlebars call as a service to create SafeStringWrapper?
-
 case class Handlebars(private val scalabars: Scalabars) {
   def SafeString(s: String) = SafeStringEvalResult(s)
   def escapeExpression(s: String): String = StringEscapeUtils.escapeHtml4(s)

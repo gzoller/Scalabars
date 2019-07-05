@@ -58,6 +58,8 @@ case class LiteralArgument(value: String) extends Argument {
         case d if d.isValidLong => LongEvalResult(d.toLongExact)
         case d                  => DoubleEvalResult(d.toDouble)
       }
+    // $COVERAGE-OFF$Parser should protect us from this.  Left here as a safety
     case _ => NoEvalResult()
+    // $COVERAGE-ON$
   }
 }

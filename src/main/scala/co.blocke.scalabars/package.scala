@@ -171,16 +171,27 @@ package object scalabars {
     case v if v.isNumber && v.fitsInInt    => JInt(v.asInt)
     case v if v.isNumber && v.fitsInLong   => JLong(v.asLong)
     case v if v.isNumber && v.fitsInDouble => JDouble(v.asDouble)
-    case v if v.hasArrayElements =>
-      JArray((0 until v.getArraySize().toInt).map(i => value2JValue(v.getArrayElement(i))).toList)
+    case v if v.hasArrayElements           => JArray((0 until v.getArraySize.toInt).map(i => value2JValue(v.getArrayElement(i))).toList)
     case v if v.hasMembers =>
-      JObject(v.getMemberKeys().asScala.toList.map(k => k -> value2JValue(v.getMember(k))))
+      JObject(v.getMemberKeys.asScala.toList.map { k =>
+        k -> {
+          v.getMember(k) match {
+            case host if host.isHostObject =>
+              host.asHostObject().asInstanceOf[AnyRef] match {
+                case s: SafeStringEvalResult => JString(s.value)
+                case _                       => throw new BarsException("Unknown object returned in data object from helper")
+              }
+            case other =>
+              value2JValue(other)
+          }
+        }
+      })
   }
 
   // 10) Map[String,EvalResult] --> Graal Value (ProxyObject)
   //---------------------------------------------------------
   implicit def maper2graalvalue(m: Map[String, EvalResult[_]])(implicit sb: Scalabars): ProxyObject =
-    ProxyObject.fromMap(m.map { case (k, v) => k -> er2graalvalue(v).asInstanceOf[AnyRef] }.asJava)
+    ProxyObject.fromMap(m.map { case (k, v) => k -> er2graalvalue(v) }.asJava)
 
   // 11) Graal Value (ProxyObject) --> Map[String,EvalResult]
   //---------------------------------------------------------

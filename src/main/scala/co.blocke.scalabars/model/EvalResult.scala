@@ -7,12 +7,12 @@ trait EvalResult[T] {
   val value: T
 
   /**
-    * Subscript that is context-aware (arrays/objects).  Only ContextEvalResults can really implement this,
-    * but included in all of them so we don't need a bunch of special handlers.
-    * @param idx
-    * @param options
-    * @return None if idx type doesn't match this type, e.g. non-Int for an Array
-    */
+   * Subscript that is context-aware (arrays/objects).  Only ContextEvalResults can really implement this,
+   * but included in all of them so we don't need a bunch of special handlers.
+   * @param idx
+   * @param options
+   * @return None if idx type doesn't match this type, e.g. non-Int for an Array
+   */
   // $COVERAGE-OFF$Never called exception for override.
   def >>(idx: EvalResult[_])(implicit options: Options): Option[Context] = None
   // $COVERAGE-ON$
@@ -23,8 +23,8 @@ trait EvalResult[T] {
 case class StringEvalResult(value: String) extends EvalResult[String]
 
 /**
-  * Like StringEvalResult, except that the wrapped string will not be escaped.
-  */
+ * Like StringEvalResult, except that the wrapped string will not be escaped.
+ */
 case class SafeStringEvalResult(value: String) extends EvalResult[String]
 
 case class ContextEvalResult(value: Context) extends EvalResult[Context] {

@@ -1,5 +1,6 @@
 package co.blocke.scalabars
 
+import co.blocke.scalabars.Runme.{ json, sb, t }
 import org.scalatest.{ FunSpec, Matchers }
 
 class MiscTests() extends FunSpec with Matchers {
@@ -146,6 +147,7 @@ class MiscTests() extends FunSpec with Matchers {
                                         |Kid:     value - boat
                                         |""".stripMargin)
       }
+
     }
     describe("--------------\n:  Coverage  :\n--------------") {
       it("Scalabars") {
@@ -173,6 +175,7 @@ class MiscTests() extends FunSpec with Matchers {
                                                        |     HelperTag this (PathHelper(this))
                                                        |       args: List()
                                                        |""".stripMargin)
+        model.EmptyTemplate().render(model.Context.NotFound) should be("")
       }
       it("Options") {
         sb.compile("Foo{{this}}").compileOptions.toString should be(
@@ -191,7 +194,62 @@ class MiscTests() extends FunSpec with Matchers {
         val c = model.Context.NotFound
         c.flatten() should be(model.Context.NotFound)
         the[BarsException] thrownBy sb.compile("""{{name.2}}""")(json) should have message "Can't index into a non-array in path: name.2"
+
+        // TODO: SafeString @ vars seem to crash at the moment...
+        // Test other @data var types (e.g. Double, SafeString)
+        val sb2 = sb.registerHelper(
+          "jsEach",
+          """
+            |function(arr, options) {
+            |  if(!arr || arr.length === 0) {
+            |    return options.inverse();
+            |  }
+            |
+            |  var data={};
+            |  if( options.data ) {
+            |    data = Handlebars.createFrame(options.data);
+            |  }
+            |
+            |  var result = [];
+            |  data.double = 12.345;
+            |  data.safe = Handlebars.SafeString("I'm safe");
+            |  for(var i=0; i<arr.length; i++) {
+            |    if(data) {
+            |      data.index = i;
+            |    }
+            |    result.push(options.fn(arr[i], {data: data}));
+            |  }
+            |
+            |  return result.join('');
+            |}""".stripMargin
+        )
+
+        sb2.compile("""{{#jsEach numbers}}Here {{@double}}{{@safe}}{{/jsEach}}""")(json) should be(
+          "Here 12.345I'm safeHere 12.345I'm safeHere 12.345I'm safeHere 12.345I'm safe")
       }
+      it("Whitespace") {
+        sb.compile("""  {{#hey}}
+                     |Foo{{/hey}}
+          """.stripMargin).compiled.head.toString should be("Whitespace || clipped: |  |")
+      }
+      it("InlinePartialTag") {
+        val t =
+          """{{#*inline 12.34}}
+            |     Here {{@wow}}
+            |{{/inline}}
+            |{{> myPartial}}""".stripMargin
+        the[BarsException] thrownBy sb.compile(t)(json) should have message ("Inline partial's argument must evaluate to a string")
+        sb.compile(t).compiled.head.toString should be("""InlinePartialTag(5)
+                                                         |    Whitespace |     | clipped: ||
+                                                         |    Text(Here)
+                                                         |    Whitespace | |
+                                                         |    HelperTag @wow (PathHelper(@wow))
+                                                         |  args: List()
+                                                         |
+                                                         |    Whitespace |\n| clipped: ||
+                                                         |--> (end Inline partial)""".stripMargin)
+      }
+
     }
   }
 }

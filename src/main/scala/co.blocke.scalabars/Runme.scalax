@@ -1,6 +1,57 @@
 package co.blocke.scalabars
 
-//import org.graalvm.polyglot.{ Context => GraalContext }
+import model._
+
+object Runme extends App {
+
+  val sb = Scalabars()
+
+  val json = org.json4s.native.JsonMethods.parse("""
+                                                   |{
+                                                   |  "title": "My New Post",
+                                                   |  "name": "Greg",
+                                                   |  "thing": "name",
+                                                   |  "age": 53,
+                                                   |  "index": 15,
+                                                   |  "ok": true,
+                                                   |  "interests": [{
+                                                   |    "item":"car",
+                                                   |    "label":"Porsche 356"
+                                                   |  },{
+                                                   |    "item":"boat",
+                                                   |    "label":"FPB 78"
+                                                   |  }],
+                                                   |  "foo": ["Hello","World"],
+                                                   |  "which": "myPartial",
+                                                   |  "numbers":[5,6,7,8],
+                                                   |  "numberSet":[[5,7],[8,9]],
+                                                   |  "player":{
+                                                   |    "name": "David",
+                                                   |    "age": 12
+                                                   |  },
+                                                   |  "stuff":["a","b","c"]
+                                                   |}""".stripMargin)
+
+  val t =
+    """{{{{#name}}}}I'm {{this}}{{{{/name}}}}""".stripMargin
+
+  println(
+    sb.registerHelper("scalar", Scalar())
+      .compile("""{{scalar player numbers nada age}}""")(json))
+
+  println("-----")
+
+}
+
+case class Scalar() extends Helper("a", "b", "c", "d") {
+  def run()(implicit options: Options, partials: Map[String, Template]): EvalResult[_] = {
+    val a = scalarArg("a")
+    val b = scalarArg("b")
+    val c = scalarArg("c")
+    val d = scalarArg("d")
+    List(a, b, c, d) == List(None, None, None, Some(53))
+  }
+}
 
 case class Person(name: String, age: Int)
 case class Desc(heavy: String)
@@ -13,38 +64,10 @@ case class Data(
     A:      List[Desc],
     player: Person
 )
+case class Magic(name: String, stuff: Map[String, Int])
 
-import javax.script._
-
-case class Foo() {
-  def hi(name: String): String = "Hi, " + name + "!"
-}
-
-object Runme extends App {
-
-  val sb = Scalabars()
-
-  val t = """This is my {{#url "http://www.yahoo.com"}}x = {{host}} - y = {{port}} - {{collection.[1]}}{{/url}}"""
-
-  val data = Map("collection" -> List("Harry", "Sally", "Larry"))
-  val data2 = Map("object" -> Map("one" -> 1, "two" -> 2))
-
-  println(sb.compile(t).render(data))
-
-  /*
-  println("Version: " + System.getProperty("java.vendor") + " " + System.getProperty("java.version"))
-  val engine = new ScriptEngineManager().getEngineByName("nashorn")
-  //  val engine = new ScriptEngineManager().getEngineByName("graal.js")
-
-  val bindings = engine.createBindings()
-  bindings.put("foo", Foo())
-  engine.setBindings(bindings, ScriptContext.ENGINE_SCOPE)
-
-  engine.eval("var myFn = function(name){return this.x + ' :: ' + foo.hi(name);}")
-  println("Say " + engine.eval("""myFn.call({"x":"bar"},'Fred')""")) // "Say Hi, Fred!"
-
-  println("Is x? " + engine.eval("this"))
-  */
-}
-
-//"""{"foo":"bar"}"""
+case class Stuff2(
+    foo:   Map[String, String],
+    bar:   Map[String, Int],
+    thing: String
+)

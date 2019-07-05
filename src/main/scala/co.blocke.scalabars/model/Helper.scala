@@ -21,15 +21,10 @@ abstract class Helper(argSymbols: String*) {
       case p :: rest => // #2
         argSymbols.indexOf(p) match {
           case i if i >= 0 =>
-            val stage1 = options.params(i)
-            if (rest.size > 0)
-              (stage1 >> StringEvalResult(rest.mkString("/"))).map(c => ContextEvalResult(c)).getOrElse(NoEvalResult())
-            else
-              stage1
+            (options.params(i) >> StringEvalResult(rest.mkString("/"))).map(c => ContextEvalResult(c)).getOrElse(NoEvalResult())
           case _ =>
             NoEvalResult()
         }
-      case _ => throw new BarsException("We're lost...") // Should Never Happen(tm)
     }
   }
 
@@ -37,33 +32,34 @@ abstract class Helper(argSymbols: String*) {
    * Use this when you want to assert that resolve argument is a scalar.
    * @param symbol
    * @param options
-   * @return String value of the scalar
-   * @throws BarsException if argument can't be resolved or is not a scalar value
+   * @return Some(scalar value) or None if non-scalar
    */
   def scalarArg(symbol: String)(implicit options: Options): Option[Any] = arg(symbol) match {
-    case c: ContextEvalResult => c.value.value match {
-      case _: JObject => None
-      case _: JArray  => None
-      case JNothing   => None
-      case v: JValue  => Some(v.values)
-    }
+    case c: ContextEvalResult =>
+      c.value.value match {
+        case _: JObject => None
+        case _: JArray  => None
+        case JNothing   => None
+        case v: JValue  => Some(v.values)
+      }
     case NoEvalResult() => None
     case e              => Some(e.value)
   }
 
   def contextArg(symbol: String)(implicit options: Options): Option[Context] = arg(symbol) match {
-    case c: ContextEvalResult => c.value.value match {
-      case _: JObject => Some(c.value)
-      case _: JArray  => Some(c.value)
-      case _          => None
-    }
+    case c: ContextEvalResult =>
+      c.value.value match {
+        case _: JObject => Some(c.value)
+        case _: JArray  => Some(c.value)
+        case _          => None
+      }
     case _ => None
   }
 
   def rawArgValue(symbol: String)(implicit options: Options): String =
     argSymbols.indexOf(symbol) match {
       case i if i >= 0 => options.paramValues(i)
-      case _           => "(unknown--symbol in helper code is unknown)"
+      case _           => throw new BarsException(s"unknown--symbol '$symbol' in helper code is unknown")
     }
 
   def lookup(basePath: String, incrementalPath: String)(implicit options: Options): Context =

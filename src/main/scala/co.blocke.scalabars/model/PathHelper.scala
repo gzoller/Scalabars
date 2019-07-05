@@ -9,7 +9,6 @@ case class PathHelper(path: String) extends Helper() {
 
   def run()(implicit options: Options, partials: Map[String, Template]): EvalResult[_] = {
     (options.context.lookup(path), options._fn, options._inverse) match {
-      //    options.context.lookup (path), options._fn, options._inverse) match {
       case (ctx, EmptyTemplate(), EmptyTemplate()) =>
         ctx.toEvalResult(options) // non-block path
 
@@ -24,7 +23,7 @@ case class PathHelper(path: String) extends Helper() {
           Nil,
           Block(OpenTag(ParsedExpression("each", Seq(PathArgument(path))), false, false, 3), fn.compiled ++ inv.compiled, CloseTag(false, false, 3))
         )
-        syntheticEach.eval(options) //.copy(context = c))
+        syntheticEach.eval(options)
 
       case (ctx, _, _) if options.isFalsy(ctx) => options.inverse(ctx)
       case (ctx, _, _)                         => options.fn(ctx)

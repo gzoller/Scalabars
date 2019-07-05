@@ -1,8 +1,6 @@
 package co.blocke.scalabars
 package model
 
-import renderables._
-
 trait HelperTagCommon {
   // Do everything necessary to update Options before eval() on this helper.  Set up any current state
   // held in Options or to be passed down by parent.

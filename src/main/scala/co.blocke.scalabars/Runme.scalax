@@ -35,17 +35,21 @@ object Runme extends App {
   val t =
     """{{{{#name}}}}I'm {{this}}{{{{/name}}}}""".stripMargin
 
-  val json2 = org.json4s.native.JsonMethods.parse("""[[4,5,6],{"x":[1,9,8]}]""")
-  val t2 = """Number: {{(lookup . "index") interests "[1].label"}}"""
-  println(sb.registerHelper("foo", FooHelper()).compile(t2)(json))
+  println(
+    sb.registerHelper("scalar", Scalar())
+      .compile("""{{scalar player numbers nada age}}""")(json))
 
   println("-----")
 
 }
 
-case class FooHelper() extends Helper("x", "y") {
+case class Scalar() extends Helper("a", "b", "c", "d") {
   def run()(implicit options: Options, partials: Map[String, Template]): EvalResult[_] = {
-    (arg("x") >> arg("y")).get
+    val a = scalarArg("a")
+    val b = scalarArg("b")
+    val c = scalarArg("c")
+    val d = scalarArg("d")
+    List(a, b, c, d) == List(None, None, None, Some(53))
   }
 }
 
@@ -67,38 +71,3 @@ case class Stuff2(
     bar:   Map[String, Int],
     thing: String
 )
-
-/*
-
-  val t =
-    """Testing...{{#name}}
-      |  {{#each ../interests}}
-      |    {{#*inline "myPartial"}}
-      |      Bar!
-      |      Again...
-      |    {{/inline}}
-      |    {{> myPartial}}
-      |  {{/each}}
-      |{{/name}}""".stripMargin
-
-Template:
-     Text(Testing...)
-     Whitespace ||
-     BlockHelper name (PathHelper(name))
-        Whitespace |\n| clipped: |  |
-        BlockHelper each (EachHelper(true))
-           Whitespace || clipped: |    |
-           InlinePartialTag(3)
-              Whitespace |      | clipped: ||
-              Text(Bar!     Again...)
-              Whitespace |\n| clipped: |    |
-           --> (end Inline partial)
-           Whitespace || clipped: |    |
-           HelperTag myPartial (PartialHelper(myPartial,Template:,true,false))
-           Whitespace |  | clipped: ||
-        --> (end BlockHelper)
-        Whitespace |\n|
-     --> (end BlockHelper)
-
-
- */

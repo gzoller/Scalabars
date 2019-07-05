@@ -1,6 +1,5 @@
 package co.blocke.scalabars
 
-import co.blocke.scalabars.Runme.{ json, sb, t }
 import org.scalatest.{ FunSpec, Matchers }
 
 class MiscTests() extends FunSpec with Matchers {

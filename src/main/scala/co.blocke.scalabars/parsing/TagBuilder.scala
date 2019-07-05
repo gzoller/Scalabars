@@ -57,7 +57,12 @@ case class TagBuilder(
         BlockHelper(expr.name, helper, isInverted = false, expr, arity, blockParams, body)
 
       case _ =>
-        val helper = sb.getHelper(expr.name).getOrElse(PathHelper(expr.name)) // resolve to either known non-block helper, or fall back to assuming its a path
+        val helper = expr.exprArg match {
+          case Some(e) => // eval expression to get helper
+            ExpressionHelper(e, false)
+          case None =>
+            sb.getHelper(expr.name).getOrElse(PathHelper(expr.name)) // resolve to either known non-block helper, or fall back to assuming its a path
+        }
         HelperTag(expr.name, helper, expr, wsCtlBefore, wsCtlAfter, arity, false)
     }
     if (trailingWS.isDefined)

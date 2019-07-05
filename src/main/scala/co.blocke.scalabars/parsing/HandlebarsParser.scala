@@ -148,7 +148,7 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
   private def trailingSpace[_: P] = P(spaces ~ "\n".?).!
 
   private def expr[_: P] = P(subExpr | simpleExpr)
-  private def subExpr[_: P] = P(exprArg ~ arg.rep).map {
+  private def subExpr[_: P] = P(exprArg ~ spacesOrNL ~ (arg ~ spacesOrNL).rep).map {
     case (e, a) => new ParsedExpression(e, a.toList)
   }
   private def simpleExpr[_: P] = P(unparsedPath ~ spacesOrNL ~ (arg ~ spacesOrNL).rep).map {

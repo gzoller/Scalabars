@@ -12,6 +12,7 @@ object Runme extends App {
                                                    |  "name": "Greg",
                                                    |  "thing": "name",
                                                    |  "age": 53,
+                                                   |  "index": 15,
                                                    |  "ok": true,
                                                    |  "interests": [{
                                                    |    "item":"car",
@@ -32,50 +33,20 @@ object Runme extends App {
                                                    |}""".stripMargin)
 
   val t =
-    """{{#*inline 12.34}}
-      |     Here {{@wow}}
-      |{{/inline}}
-      |{{> myPartial}}""".stripMargin
+    """{{{{#name}}}}I'm {{this}}{{{{/name}}}}""".stripMargin
 
-  val sb2 = sb.registerHelper(
-    "jsEach",
-    """
-      |function(arr, options) {
-      |  if(!arr || arr.length === 0) {
-      |    return options.inverse();
-      |  }
-      |
-      |  var data={};
-      |  if( options.data ) {
-      |    data = Handlebars.createFrame(options.data);
-      |  }
-      |
-      |  var result = [];
-      |  data.double = 12.345;
-      |  data.safe = Handlebars.SafeString("I'm safe");
-      |  for(var i=0; i<arr.length; i++) {
-      |    if(data) {
-      |      data.index = i;
-      |    }
-      |    result.push(options.fn(arr[i], {data: data}));
-      |  }
-      |
-      |  return result.join('');
-      |}""".stripMargin
-  )
-  println(sb2.compile("""{{#jsEach numbers}}Here {{@double}}{{@safe}}{{/jsEach}}""")(json))
-
-  //println(sb.compile(t)(json))
+  val json2 = org.json4s.native.JsonMethods.parse("""[[4,5,6],{"x":[1,9,8]}]""")
+  val t2 = """Number: {{(lookup . "index") interests "[1].label"}}"""
+  println(sb.registerHelper("foo", FooHelper()).compile(t2)(json))
 
   println("-----")
 
 }
 
-case class FooHelper() extends Helper() {
-  def run()(implicit options: Options, partials: Map[String, Template]): EvalResult[_] =
-    """This is <b>a</b> test
-      |123
-      |""".stripMargin
+case class FooHelper() extends Helper("x", "y") {
+  def run()(implicit options: Options, partials: Map[String, Template]): EvalResult[_] = {
+    (arg("x") >> arg("y")).get
+  }
 }
 
 case class Person(name: String, age: Int)

@@ -1,6 +1,7 @@
 package co.blocke.scalabars
 
 import org.scalatest.{ FunSpec, Matchers }
+import model._
 
 class MiscTests() extends FunSpec with Matchers {
 
@@ -183,6 +184,8 @@ class MiscTests() extends FunSpec with Matchers {
             |   Context = None""".stripMargin)
 
         sb.compile("""{{#if "false"}}A{{else}}B{{/if}}""")(json) should be("B")
+        sb.registerHelper("assignJS", """function(options){ return "Greetings "+ options.hash["bogus"]+"!"; }""")
+          .compile("""Hello and {{assignJS tidal="wave"}}""")(json) should be("Hello and Greetings undefined!")
       }
       it("Args") {
         sb.compile("""{{#with 12.34}}Hi {{this}}{{/with}}""")(json) should be("Hi 12.34")
@@ -194,7 +197,6 @@ class MiscTests() extends FunSpec with Matchers {
         c.flatten() should be(model.Context.NotFound)
         the[BarsException] thrownBy sb.compile("""{{name.2}}""")(json) should have message "Can't index into a non-array in path: name.2"
 
-        // TODO: SafeString @ vars seem to crash at the moment...
         // Test other @data var types (e.g. Double, SafeString)
         val sb2 = sb.registerHelper(
           "jsEach",
@@ -225,6 +227,9 @@ class MiscTests() extends FunSpec with Matchers {
 
         sb2.compile("""{{#jsEach numbers}}Here {{@double}}{{@safe}}{{/jsEach}}""")(json) should be(
           "Here 12.345I'm safeHere 12.345I'm safeHere 12.345I'm safeHere 12.345I'm safe")
+
+        sb.registerHelper("foo", HelperSample()).compile("""{{# foo}}This is a {{@safe}}{{@ctx}} test{{/foo}}""".stripMargin)(json) should be(
+          "This is a I'm safe[object Object],[object Object] test")
       }
       it("Whitespace") {
         sb.compile("""  {{#hey}}
@@ -250,5 +255,24 @@ class MiscTests() extends FunSpec with Matchers {
       }
 
     }
+    it("Raw") {
+      sb.compile("""{{{{#name}}}}I'm {{this}}{{{{/name}}}}""")(json) should be("I'm {{this}}")
+    }
+    it("ExpressionHelper") {
+      val json = org.json4s.native.JsonMethods.parse("""{
+                                                       |  "index": 15,
+                                                       |  "bogus": "nothing"
+                                                       |}""".stripMargin)
+      the[BarsException] thrownBy sb.compile("""Number: {{(lookup . "index") interests "[1].label"}}""")(json) should have message "Expression helpers must resolve to a String"
+      the[BarsException] thrownBy sb.compile("""Number: {{(lookup . "bogus") interests "[1].label"}}""")(json) should have message "Expression eval to 'nothing' but no helper by this name is registered."
+      the[BarsException] thrownBy sb.compile("""Number: {{>(lookup . "bogus") interests "[1].label"}}""")(json) should have message "Expression eval to 'nothing' but no partial by this name is registered."
+    }
+  }
+}
+
+case class HelperSample() extends Helper("x") {
+  def run()(implicit options: Options, partials: Map[String, Template]): EvalResult[_] = {
+    val data: Map[String, EvalResult[_]] = Map("safe" -> SafeStringEvalResult("I'm safe"), "ctx" -> options.context.lookup("interests"))
+    options.fn(options.context, data)
   }
 }

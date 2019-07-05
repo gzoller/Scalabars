@@ -50,13 +50,14 @@ case class ContextEvalResult(value: Context) extends EvalResult[Context] {
         (idx.value match {
           case i: Long                          => Some(i.toInt)
           case Context(_, JLong(i), _, _, _, _) => Some(i.toInt)
-          case Context(_, JInt(i), _, _, _, _)  => Some(i)
           case _                                => None
         }).map(i => value.lookup(prefixPath(value.path, s"[$i]"))).orElse {
           // Could be further drill-down: [2].foo (String idx, not Int)
           (idx.value match {
             case s: String                          => Some(s)
+            // $COVERAGE-OFF$Doesn't seem to be possible to have idx.value be a Context, but just in case...
             case Context(_, JString(s), _, _, _, _) => Some(s)
+            // $COVERAGE-ON$
             case _                                  => None
           }).map(s => value.lookup(prefixPath(value.path, s)))
         }

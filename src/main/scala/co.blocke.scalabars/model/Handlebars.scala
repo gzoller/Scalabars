@@ -6,7 +6,7 @@ import collection.JavaConverters._
 import org.graalvm.polyglot.Value
 
 case class Handlebars(private val scalabars: Scalabars) {
-  def SafeString(s: String) = SafeStringEvalResult(s)
+  def SafeString(s: String): SafeStringEvalResult = SafeStringEvalResult(s)
   def escapeExpression(s: String): String = StringEscapeUtils.escapeHtml4(s)
 
   def createFrame(data: Value): Value = {

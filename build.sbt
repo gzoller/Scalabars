@@ -6,7 +6,7 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / organization := "com.example"
 ThisBuild / organizationName := "example"
 
-val graalversion = "1.0.0-rc16"
+val graalversion = "19.1.0"
 
 val fastparse    = "com.lihaoyi"          %% "fastparse"      % "2.1.3"
 val commonsText  = "org.apache.commons"   % "commons-text"    % "1.6"

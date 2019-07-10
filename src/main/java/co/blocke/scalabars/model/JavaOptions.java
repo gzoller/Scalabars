@@ -21,7 +21,7 @@ public class JavaOptions {
     public Context context;
     public String helperName;
     public List<String> blockParams;
-    public List<Object> params = Collections.emptyList();  // TODO: Populate this!
+    public List<Object> params = Collections.emptyList();
     public ProxyObject data;
     public ProxyObject hash;
 

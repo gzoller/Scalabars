@@ -96,7 +96,7 @@ case class Scalabars(
 
   def compile(rawTemplate: String, compileOptions: Map[String, Boolean] = Map.empty[String, Boolean]) = {
     val hashArgs = stockOptions ++ compileOptions.map { case (k, v) => (k, BooleanEvalResult(v)) }
-    SBTemplate(parser.compile(rawTemplate).toList, Options(this, _hash = hashArgs))
+    SBTemplate(parser.compile(rawTemplate)(compileOptions).toList, Options(this, _hash = hashArgs))
   }
 
   private[scalabars] def getHelper(name: String): Option[Helper] = helpers.get(name)

@@ -13,7 +13,7 @@ import co.blocke.listzipper.mutable.ListZipper
  *   * Wire parent for PartialHelper
  */
 object PostParse {
-  def clean(seq: Seq[Renderable]): Seq[Renderable] = {
+  def clean(seq: Seq[Renderable])(implicit compileOptions: Map[String, Boolean]): Seq[Renderable] = {
     val zipper = ListZipper(seq)
     while (!zipper.crashedRight) {
       if (zipper.focus.isDefined) zipper.focus.get match {
@@ -55,7 +55,7 @@ object PostParse {
               var beforeFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
               var afterFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
 
-              if (aloneOnLine) {
+              if (aloneOnLine && !compileOptions.getOrElse("ignoreStandalone", false)) {
                 beforeFn = Some(clipOpenBefore)
                 afterFn = Some(clipCloseAfter)
               }
@@ -88,7 +88,7 @@ object PostParse {
     zipper.toList
   }
 
-  private def cleanOpenTag[T](z: ListZipper[Renderable], body: Block): T = {
+  private def cleanOpenTag[T](z: ListZipper[Renderable], body: Block)(implicit compileOptions: Map[String, Boolean]): T = {
     val clearBefore = z.index == 0 || (z.prevAs[Whitespace] match {
       case Some(ws) if z.index == 1 || ws.ws.contains("\n") || ws.isClipped => true
       case _ => false
@@ -103,7 +103,7 @@ object PostParse {
     var beforeFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
     var afterFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
 
-    if (aloneOnLine) {
+    if (aloneOnLine && !compileOptions.getOrElse("ignoreStandalone", false)) {
       beforeFn = Some(clipOpenBefore)
       afterFn = Some(clipOpenAfter)
     }
@@ -119,7 +119,7 @@ object PostParse {
       .asInstanceOf[T]
   }
 
-  private def cleanCloseTag[T](z: ListZipper[Renderable], body: Block): T = {
+  private def cleanCloseTag[T](z: ListZipper[Renderable], body: Block)(implicit compileOptions: Map[String, Boolean]): T = {
     val clearBefore = body.body.last match {
       case ws: Whitespace if ws.ws.contains("\n") || ws.isClipped => true
       case _ => false
@@ -133,7 +133,7 @@ object PostParse {
     var beforeFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
     var afterFn: Option[ListZipper[Renderable] => ListZipper[Renderable]] = None
 
-    if (aloneOnLine) {
+    if (aloneOnLine && !compileOptions.getOrElse("ignoreStandalone", false)) {
       beforeFn = Some(clipCloseBefore)
       afterFn = Some(clipCloseAfter)
     }

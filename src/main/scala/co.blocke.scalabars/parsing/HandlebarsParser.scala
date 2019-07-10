@@ -237,7 +237,7 @@ case class HandlebarsParser()(implicit val sb: Scalabars) {
 
   //-----------------------------<< Compile!
 
-  def compile(input: String): Seq[Renderable] = {
+  def compile(input: String)(implicit compileOptions: Map[String, Boolean]): Seq[Renderable] = {
     parse(input, template(_)) match {
       case Parsed.Success(value, _) => PostParse.clean(value)
       case f @ Parsed.Failure(label, index, extra) =>

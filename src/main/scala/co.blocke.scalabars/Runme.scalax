@@ -21,6 +21,10 @@ object Runme extends App {
                                                    |    "item":"boat",
                                                    |    "label":"FPB 78"
                                                    |  }],
+                                                   |  "strs": [
+                                                   |    ["a","b","c"],
+                                                   |    ["d","e"]
+                                                   |  ],
                                                    |  "foo": ["Hello","World"],
                                                    |  "which": "myPartial",
                                                    |  "numbers":[5,6,7,8],
@@ -33,11 +37,15 @@ object Runme extends App {
                                                    |}""".stripMargin)
 
   val t =
-    """{{{{#name}}}}I'm {{this}}{{{{/name}}}}""".stripMargin
+    """{{# each strs as |ctx1 idx1 isFirst1 isLast1|}}
+      |  outer: {{idx1}} first? {{isFirst1}}  last? {{isLast1}}
+      |  {{# each . as |ct2 idx2 isFirst2 isLast2|}}
+      |    inner: {{idx2}} first? {{isFirst2}}  last? {{isLast2}}
+      |  {{/each}}
+      |{{/each}}
+    """.stripMargin
 
-  println(
-    sb.registerHelper("scalar", Scalar())
-      .compile("""{{scalar player numbers nada age}}""")(json))
+  println(sb.compile(t)(json))
 
   println("-----")
 

@@ -3,19 +3,16 @@ package model
 
 import org.graalvm.polyglot.Value
 import org.json4s.native.JsonMethods
+import scala.collection.JavaConverters._
 
 object JSHelper {
 
   // Simple eval with no parameters
-  private[scalabars] def jsEval(context: Context, js: String)(
-      implicit
-      sb: Scalabars): EvalResult[_] =
+  private[scalabars] def jsEval(context: Context, js: String)(implicit sb: Scalabars): EvalResult[_] =
     interpretJSreturn(context, sb.js.eval("js", js))
 
-  // More complext running of a function with parameters and 'this' context
-  private[scalabars] def jsRunFn(fnName: String, context: Context, args: List[Object])(
-      implicit
-      sb: Scalabars): EvalResult[_] = {
+  // More complex running of a function with parameters and 'this' context
+  private[scalabars] def jsRunFn(fnName: String, context: Context, args: List[Object])(implicit sb: Scalabars): EvalResult[_] = {
     val thisContext = JsonMethods.compact(JsonMethods.render(context.value))
     val fn = sb.js.eval("js", s"""($fnName.bind($thisContext))""")
     interpretJSreturn(context, fn.execute(args: _*))
@@ -47,8 +44,11 @@ case class JSHelper(name: String, js: String) extends Helper() {
     }
 
     // Now we need to transform helper arguments (options.params) from EvalResult into graal Value objects
-    val params = options.params.map(p => er2graalvalue(p)(options.handlebars)) :+ options.asJava
+    val params = options.params.map(p => er2graalvalue(p)(options.handlebars))
+    val javaOptions = options.asJava
+    javaOptions.params = params.asJava
+    val paramsPlusOptions = params :+ javaOptions
 
-    jsRunFn(name, options.context, params.asInstanceOf[List[Object]])(options.handlebars)
+    jsRunFn(name, options.context, paramsPlusOptions.asInstanceOf[List[Object]])(options.handlebars)
   }
 }

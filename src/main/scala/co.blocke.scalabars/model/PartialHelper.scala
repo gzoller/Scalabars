@@ -5,12 +5,7 @@ import org.json4s._
 import renderables._
 
 // t is defined only for registerd partials.  Inline partials are EmptyTemplate for t
-case class PartialHelper(
-    name:           String,
-    t:              Template,
-    firstPass:      Boolean  = true,
-    isPartialBlock: Boolean  = false)
-  extends Helper("givenContext") {
+case class PartialHelper(name: String, t: Template, firstPass: Boolean = true, isPartialBlock: Boolean = false) extends Helper("givenContext") {
 
   private var parent: Option[Renderable] = None
   def setParent(p: Renderable) = {
@@ -32,15 +27,7 @@ case class PartialHelper(
                 .getOrElse(name, throw new BarsException(s"No partial named '${name}' registered"))
             case _ => t
           }
-          RenderableEvalResult(
-            BlockHelper(
-              name,
-              this.copy(firstPass = false),
-              false,
-              ht.expr,
-              ht.arity,
-              Seq.empty[String],
-              Block(template).get))
+          RenderableEvalResult(BlockHelper(name, this.copy(firstPass = false), false, ht.expr, ht.arity, Seq.empty[String], Block(template).get))
 
         case bt: BlockHelper =>
           // At this point we have a bit of confusion.  Template 't' may be empty or non-empty.  We're a block, so the block body
@@ -50,11 +37,7 @@ case class PartialHelper(
           // 2. Empty t, isPartialBlock = true      ==> Non-registerd, but inline partial found.  Use block body as @partial-block
           // 3. Non-Empty t, isPartialBlock = false ==> Registered partial (found).  Ignore block body (fail-over but not needed--assign to @partial-block anyway)
           // 4. Non-Empty t, isPartialBlock = true  ==> (same as #3)  This false case would be a registerd partial that's also a found inline partial
-          RenderableEvalResult(
-            bt.copy(
-              helper = this.copy(
-                firstPass      = false,
-                isPartialBlock = options.context.partials.get(name).isDefined)))
+          RenderableEvalResult(bt.copy(helper = this.copy(firstPass      = false, isPartialBlock = options.context.partials.get(name).isDefined)))
       }
     } else {
       // 2nd Pass

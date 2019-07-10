@@ -1,5 +1,7 @@
   
-# Scalabars [![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=86400)](https://opensource.org/licenses/MIT)  
+# Scalabars 
+
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=86400)](https://opensource.org/licenses/MIT)  
 [![bintray](https://api.bintray.com/packages/blocke/releases/scalabars/images/download.svg)](https://bintray.com/blocke/releases/scalabars/_latestVersion)  
 [![Build Status](https://img.shields.io/travis/gzoller/Scalabars.svg?branch=master)](https://travis-ci.org/gzoller/Scalabars)  
 [![Codacy branch grade](https://img.shields.io/codacy/grade/9437bb8b88464096b1a848ba0eed8b7d/master.svg?maxAge=2592000)](https://www.codacy.com/app/gzoller/Scalabars?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=gzoller/Scalabars&amp;utm_campaign=Badge_Grade)  

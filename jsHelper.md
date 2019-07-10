@@ -1,5 +1,5 @@
   
-# Java Helpers  
+# JavaScript Helpers  
 Scalabars supports Javascript native helpers, just like stock Handlebars.  We can't claim 100% no-fuss compatibility, but it does do a pretty good job of being close.
 
 You register JavaScript helpers like this:

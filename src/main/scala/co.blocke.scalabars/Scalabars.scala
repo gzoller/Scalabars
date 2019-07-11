@@ -20,6 +20,7 @@ object Scalabars {
       "unless" -> UnlessHelper(),
       "with" -> WithHelper(),
       "helperMissing" -> HelperMissingHelper(),
+      "blockHelperMissing" -> BlockHelperMissingHelper(),
       // Comparisons
       "eq" -> EqHelper(),
       "ne" -> NeHelper(),

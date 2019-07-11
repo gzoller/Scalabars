@@ -9,10 +9,14 @@ case class PathHelper(path: String) extends Helper() {
 
   def run()(implicit options: Options, partials: Map[String, Template]): EvalResult[_] = {
     (options.context.lookup(path), options._fn, options._inverse) match {
-      case (ctx, _, _) if ctx.value == JNothing =>
+      case (ctx, fn, inv) if ctx.value == JNothing =>
         if (options.hash("strict") == "true" || options.hash("knownHelpersOnly") == "true")
           throw new BarsException("Path or helper not found: " + path)
-        options.handlebars.getHelper("helperMissing").get.run()
+        val result = options.handlebars.getHelper("helperMissing").get.run()
+        if (fn == EmptyTemplate() && inv == EmptyTemplate())
+          result // non-block
+        else // block
+          options.handlebars.getHelper("blockHelperMissing").get.run()
 
       case (ctx, EmptyTemplate(), EmptyTemplate()) =>
         ctx.toEvalResult // non-block path

@@ -284,5 +284,15 @@ class StockHelpers() extends FunSpec with Matchers {
       )
       sb2.compile("This {{foo}}")(c) should be("This nothing here")
     }
+    it("blockHelperMissing") {
+      val sb2 = sb.registerHelper(
+        "blockHelperMissing",
+        """function(arr, options) {
+          |  return "nothing here";
+          |}
+        """.stripMargin
+      )
+      sb2.compile("This {{#foo}}blah{{/foo}}")(c) should be("This nothing here")
+    }
   }
 }

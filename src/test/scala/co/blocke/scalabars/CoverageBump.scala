@@ -32,7 +32,7 @@ class CoverageBump() extends FunSpec with Matchers {
   describe("--------------\n:  Coverage  :\n--------------") {
     it("Scalabars") {
       sb.toString should be(
-        "Scalabars(helpers=[lookup,lengthEquals,any,empty,join,url,if,withLookup,sortEach,else,withTake,or,each,last,raw,withDrop,default,unless,with,first,include,length,withFirst,withLast,contains,ne,eq,and,markdown])")
+        "Scalabars(helpers=[lookup,lengthEquals,helperMissing,any,empty,join,url,if,withLookup,sortEach,else,withTake,or,each,last,raw,withDrop,default,unless,with,first,include,length,withFirst,withLast,contains,ne,eq,and,markdown])")
     }
     it("PathParser") {
       val t = """{{/foo/#bogus}}"""
@@ -76,7 +76,7 @@ class CoverageBump() extends FunSpec with Matchers {
     it("Options") {
       sb.compile("Foo{{this}}").compileOptions.toString should be(
         """Options:
-          |   Hash = Map(noEscape -> false, strict -> false, preventIndent -> false, explicitPartialContext -> false)
+          |   Hash = Map(preventIndent -> false, strict -> false, noEscape -> false, explicitPartialContext -> false, knownHelpersOnly -> false)
           |   Context = None""".stripMargin)
 
       sb.compile("""{{#if "false"}}A{{else}}B{{/if}}""")(json) should be("B")

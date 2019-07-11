@@ -19,6 +19,7 @@ object Scalabars {
       "lookup" -> LookupHelper(),
       "unless" -> UnlessHelper(),
       "with" -> WithHelper(),
+      "helperMissing" -> HelperMissingHelper(),
       // Comparisons
       "eq" -> EqHelper(),
       "ne" -> NeHelper(),
@@ -67,7 +68,8 @@ case class Scalabars(
     "noEscape" -> BooleanEvalResult(false),
     "strict" -> BooleanEvalResult(false),
     "preventIndent" -> BooleanEvalResult(false),
-    "explicitPartialContext" -> BooleanEvalResult(false)
+    "explicitPartialContext" -> BooleanEvalResult(false),
+    "knownHelpersOnly" -> BooleanEvalResult(false)
   )
 
   // This is here so we get a new Context (javascript engine) for every Scalabars() instance.

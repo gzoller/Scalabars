@@ -45,7 +45,7 @@ object Runme extends App {
       |{{/each}}
     """.stripMargin
 
-  println(sb.compile(t)(json))
+  println(sb.compile("Hey {{bogus}}!", Map("strict" -> true))(json))
 
   println("-----")
 

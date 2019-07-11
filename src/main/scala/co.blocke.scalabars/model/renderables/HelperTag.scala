@@ -39,7 +39,7 @@ case class HelperTag(
 
   def eval(options: Options): EvalResult[_] =
     if (nameOrPath == "@partial-block")
-      options.context.lookup(nameOrPath).toEvalResult(options)
+      options.context.lookup(nameOrPath).toEvalResult
     else
       helper.run()(bakeOptions(nameOrPath, expr, options), Map.empty[String, Template])
 

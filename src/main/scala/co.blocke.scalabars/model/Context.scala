@@ -103,10 +103,8 @@ case class Context(
     }
   }
 
-  def toEvalResult(options: Options): EvalResult[_] =
+  def toEvalResult: EvalResult[_] =
     this.value match {
-      case JNothing if options.hash("strict") == "true" =>
-        throw new BarsException("Path not found: " + path)
       case JNothing   => NoEvalResult()
       case _: JObject => ContextEvalResult(this)
       case _: JArray  => ContextEvalResult(this)

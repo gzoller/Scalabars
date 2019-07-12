@@ -64,7 +64,7 @@ case class Scalabars(
     fileGetter:                      FileGetter
 ) {
 
-  override def toString: String = "Scalabars(helpers=" + helpers.keys.mkString("[", ",", "]") + ")"
+  override def toString: String = "Scalabars(helpers=" + helpers.keys.toList.sorted.mkString("[", ",", "]") + ")"
 
   private lazy val parser = HandlebarsParser()(this)
 

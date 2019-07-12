@@ -32,7 +32,7 @@ class CoverageBump() extends FunSpec with Matchers {
   describe("--------------\n:  Coverage  :\n--------------") {
     it("Scalabars") {
       sb.toString should be(
-        "Scalabars(helpers=[blockHelperMissing,lookup,lengthEquals,helperMissing,any,empty,join,url,if,withLookup,sortEach,else,withTake,or,each,last,raw,withDrop,default,unless,with,first,include,length,withFirst,withLast,contains,ne,eq,and,markdown])")
+        "Scalabars(helpers=[blockHelperMissing,lookup,lengthEquals,helperMissing,any,empty,join,url,if,withLookup,sortEach,else,withTake,or,each,last,raw,withDrop,default,unless,with,first,include,length,withFirst,withLast,contains,ne,eq,log,and,markdown])")
     }
     it("PathParser") {
       val t = """{{/foo/#bogus}}"""

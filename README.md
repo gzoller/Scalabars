@@ -57,6 +57,11 @@ Use options like this:
 sb.compile("{{foo}}", Map("preventIndent"->true, "strict"->true"))(json)
 ```
 
+### Logging
+Rather than marry Scalabars with a particular logging library, we took the direction of providing a trivial trait, SBLogger, that supports
+just enough to support Handlebars compatibility.  Out of the box the default implementation is Java's built-in Logger machinery, but
+adding support for your favorite logging facility will be as trivial as implementing the SBLogger class. 
+
 ## Developing Your Own Helpers  
   
 * [Scala](scalaHelper.md)  

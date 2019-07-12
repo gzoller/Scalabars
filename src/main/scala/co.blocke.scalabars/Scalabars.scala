@@ -11,7 +11,7 @@ import helpers.comparison._
 import helpers.misc._
 
 object Scalabars {
-  def apply(): Scalabars = Scalabars(
+  def apply(logger: Option[SBLogger] = None): Scalabars = Scalabars(
     Map(
       // Stock Handlebars
       "each" -> EachHelper(),
@@ -21,6 +21,7 @@ object Scalabars {
       "with" -> WithHelper(),
       "helperMissing" -> HelperMissingHelper(),
       "blockHelperMissing" -> BlockHelperMissingHelper(),
+      "log" -> LogHelper(),
       // Comparisons
       "eq" -> EqHelper(),
       "ne" -> NeHelper(),
@@ -51,13 +52,15 @@ object Scalabars {
       "else" -> ElseHelper()
     ),
     collection.mutable.Map.empty[String, PartialHelper],
+    logger.getOrElse(JavaLogger()),
     NoopFileGetter()
   )
 }
 
 case class Scalabars(
     private val helpers:             Map[String, Helper],
-    private[scalabars] val partials: collection.mutable.Map[String, PartialHelper] = collection.mutable.Map.empty[String, PartialHelper],
+    private[scalabars] val partials: collection.mutable.Map[String, PartialHelper],
+    logger:                          SBLogger,
     fileGetter:                      FileGetter
 ) {
 

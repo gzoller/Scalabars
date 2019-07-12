@@ -76,7 +76,7 @@ class CoverageBump() extends FunSpec with Matchers {
     it("Options") {
       sb.compile("Foo{{this}}").compileOptions.toString should be(
         """Options:
-          |   Hash = Map(preventIndent -> false, strict -> false, noEscape -> false, explicitPartialContext -> false, knownHelpersOnly -> false)
+          |   Hash = Map(preventIndent -> false, strict -> false, ignoreStandalone -> false, noEscape -> false, explicitPartialContext -> false, knownHelpersOnly -> false)
           |   Context = None""".stripMargin)
 
       sb.compile("""{{#if "false"}}A{{else}}B{{/if}}""")(json) should be("B")

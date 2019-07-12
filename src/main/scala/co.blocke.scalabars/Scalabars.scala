@@ -73,7 +73,8 @@ case class Scalabars(
     "strict" -> BooleanEvalResult(false),
     "preventIndent" -> BooleanEvalResult(false),
     "explicitPartialContext" -> BooleanEvalResult(false),
-    "knownHelpersOnly" -> BooleanEvalResult(false)
+    "knownHelpersOnly" -> BooleanEvalResult(false),
+    "ignoreStandalone" -> BooleanEvalResult(false)
   )
 
   // This is here so we get a new Context (javascript engine) for every Scalabars() instance.

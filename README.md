@@ -50,6 +50,7 @@ Several stock Handlebars compile options work in Scalabars.  Those not supported
 - `preventIndent`: By default, an indented partial-call causes the output of the whole partial being indented by the same amount. This can lead to unexpected behavior when the partial writes  `pre`-tags. Setting this option to  `true`  will disable the auto-indent feature.
 - `explicitPartialContext`: Disables implicit context for partials. When enabled, partials that are not passed a context value will execute against an empty object.
 - `ignoreStandalone`: Disables standalone tag removal when set to  `true`. When set, blocks and partials that are on their own line will not remove the whitespace on that line.
+- `knownHelpersOnly`: Set to true to allow further optimzations based on the known helpers list.
 
 Use options like this:
 

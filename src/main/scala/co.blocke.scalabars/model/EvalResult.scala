@@ -7,13 +7,13 @@ trait EvalResult[T] {
   val value: T
 
   /**
-    * Subscript function that is context-aware (arrays/objects).  Only ContextEvalResults can really implement this,
-    * but included in all of them so we don't need a bunch of special handlers.  For Contexts, we really don't know
-    * if we're getting and array or object context, so we need an agnostic subscript function.
-    * @param idx
-    * @param options
-    * @return None if idx type doesn't match this type, e.g. non-Int for an Array
-    */
+   * Subscript function that is context-aware (arrays/objects).  Only ContextEvalResults can really implement this,
+   * but included in all of them so we don't need a bunch of special handlers.  For Contexts, we really don't know
+   * if we're getting and array or object context, so we need an agnostic subscript function.
+   * @param idx
+   * @param options
+   * @return None if idx type doesn't match this type, e.g. non-Int for an Array
+   */
   // $COVERAGE-OFF$Never called exception for override.
   def >>(idx: EvalResult[_])(implicit options: Options): Option[Context] = None
   // $COVERAGE-ON$
@@ -24,8 +24,8 @@ trait EvalResult[T] {
 case class StringEvalResult(value: String) extends EvalResult[String]
 
 /**
-  * Like StringEvalResult, except that the wrapped string will not be escaped.
-  */
+ * Like StringEvalResult, except that the wrapped string will not be escaped.
+ */
 case class SafeStringEvalResult(value: String) extends EvalResult[String]
 
 case class ContextEvalResult(value: Context) extends EvalResult[Context] {
@@ -55,11 +55,11 @@ case class ContextEvalResult(value: Context) extends EvalResult[Context] {
         }).map(i => value.lookup(prefixPath(value.path, s"[$i]"))).orElse {
           // Could be further drill-down: [2].foo (String idx, not Int)
           (idx.value match {
-            case s: String => Some(s)
+            case s: String                          => Some(s)
             // $COVERAGE-OFF$Doesn't seem to be possible to have idx.value be a Context, but just in case...
             case Context(_, JString(s), _, _, _, _) => Some(s)
             // $COVERAGE-ON$
-            case _ => None
+            case _                                  => None
           }).map(s => value.lookup(prefixPath(value.path, s)))
         }
       case a: JObject if a.children.nonEmpty =>

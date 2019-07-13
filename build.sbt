@@ -1,4 +1,3 @@
-import Dependencies._
 import scoverage.ScoverageKeys._
 
 ThisBuild / scalaVersion := "2.12.8"
@@ -33,7 +32,7 @@ val basicSettings = Seq(
   resolvers += "Bintray Releases" at "http://dl.bintray.com/blocke/releases/"
 )
 
-val pubSettings = Seq (
+val pubSettings = Seq(
   publishMavenStyle := true,
   bintrayOrganization := Some("blocke"),
   bintrayReleaseOnPublish in ThisBuild := false,

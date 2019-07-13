@@ -1,11 +1,11 @@
 package co.blocke.scalabars
 
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.{ FunSpec, Matchers }
 import model._
 
 class CoverageBump() extends FunSpec with Matchers {
 
-  val sb   = Scalabars().registerPartial("childEntry", "Kid: {{>@partial-block}}")
+  val sb = Scalabars().registerPartial("childEntry", "Kid: {{>@partial-block}}")
   val json = org.json4s.native.JsonMethods.parse("""
                                                    |{
                                                    |  "name": "Greg",

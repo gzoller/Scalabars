@@ -56,5 +56,7 @@ case class Options(
     case _                         => false
   }
 
+  // $COVERAGE-OFF$For debugging only
   override def toString = "Options:\n   Hash = " + _hash + "\n   Context = " + context
+  // $COVERAGE-ON$
 }

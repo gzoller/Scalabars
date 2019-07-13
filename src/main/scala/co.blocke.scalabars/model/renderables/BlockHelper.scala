@@ -69,6 +69,7 @@ case class BlockHelper(
       }
       .get
 
+  // $COVERAGE-OFF$For debugging only
   override def toString(): String = {
     s"BlockHelper $name ($helper)\n" +
       "  args: " + expr.args + "\n" +
@@ -76,4 +77,5 @@ case class BlockHelper(
       body.body.map(_.toString).map(s => "    " + s).mkString("\n") +
       "\n--> (end BlockHelper)"
   }
+  // $COVERAGE-ON$
 }

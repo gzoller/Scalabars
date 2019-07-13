@@ -33,8 +33,18 @@ val basicSettings = Seq(
   resolvers += "Bintray Releases" at "http://dl.bintray.com/blocke/releases/"
 )
 
+val pubSettings = Seq (
+  publishMavenStyle := true,
+  bintrayOrganization := Some("blocke"),
+  bintrayReleaseOnPublish in ThisBuild := false,
+  licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
+  bintrayRepository := "releases",
+  bintrayPackageLabels := Seq("scala", "handlebars")
+)
+
 lazy val root = (project in file("."))
   .settings(basicSettings ++ crossVersions: _*)
+  .settings(pubSettings: _*)
   .settings(
     name := "scalabars",
     libraryDependencies ++= Seq(fastparse,

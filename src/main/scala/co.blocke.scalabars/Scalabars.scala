@@ -11,7 +11,7 @@ import helpers.comparison._
 import helpers.misc._
 
 object Scalabars {
-  def apply(): Scalabars = Scalabars(
+  def apply(logger: Option[SBLogger] = None): Scalabars = Scalabars(
     Map(
       // Stock Handlebars
       "each" -> EachHelper(),
@@ -19,6 +19,9 @@ object Scalabars {
       "lookup" -> LookupHelper(),
       "unless" -> UnlessHelper(),
       "with" -> WithHelper(),
+      "helperMissing" -> HelperMissingHelper(),
+      "blockHelperMissing" -> BlockHelperMissingHelper(),
+      "log" -> LogHelper(),
       // Comparisons
       "eq" -> EqHelper(),
       "ne" -> NeHelper(),
@@ -49,17 +52,19 @@ object Scalabars {
       "else" -> ElseHelper()
     ),
     collection.mutable.Map.empty[String, PartialHelper],
+    logger.getOrElse(JavaLogger()),
     NoopFileGetter()
   )
 }
 
 case class Scalabars(
     private val helpers:             Map[String, Helper],
-    private[scalabars] val partials: collection.mutable.Map[String, PartialHelper] = collection.mutable.Map.empty[String, PartialHelper],
+    private[scalabars] val partials: collection.mutable.Map[String, PartialHelper],
+    logger:                          SBLogger,
     fileGetter:                      FileGetter
 ) {
 
-  override def toString: String = "Scalabars(helpers=" + helpers.keys.mkString("[", ",", "]") + ")"
+  override def toString: String = "Scalabars(helpers=" + helpers.keys.toList.sorted.mkString("[", ",", "]") + ")"
 
   private lazy val parser = HandlebarsParser()(this)
 
@@ -67,7 +72,9 @@ case class Scalabars(
     "noEscape" -> BooleanEvalResult(false),
     "strict" -> BooleanEvalResult(false),
     "preventIndent" -> BooleanEvalResult(false),
-    "explicitPartialContext" -> BooleanEvalResult(false)
+    "explicitPartialContext" -> BooleanEvalResult(false),
+    "knownHelpersOnly" -> BooleanEvalResult(false),
+    "ignoreStandalone" -> BooleanEvalResult(false)
   )
 
   // This is here so we get a new Context (javascript engine) for every Scalabars() instance.

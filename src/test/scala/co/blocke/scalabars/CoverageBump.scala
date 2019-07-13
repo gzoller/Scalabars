@@ -32,7 +32,7 @@ class CoverageBump() extends FunSpec with Matchers {
   describe("--------------\n:  Coverage  :\n--------------") {
     it("Scalabars") {
       sb.toString should be(
-        "Scalabars(helpers=[lookup,lengthEquals,any,empty,join,url,if,withLookup,sortEach,else,withTake,or,each,last,raw,withDrop,default,unless,with,first,include,length,withFirst,withLast,contains,ne,eq,and,markdown])")
+        "Scalabars(helpers=[and,any,blockHelperMissing,contains,default,each,else,empty,eq,first,helperMissing,if,include,join,last,length,lengthEquals,log,lookup,markdown,ne,or,raw,sortEach,unless,url,with,withDrop,withFirst,withLast,withLookup,withTake])")
     }
     it("PathParser") {
       val t = """{{/foo/#bogus}}"""
@@ -74,11 +74,6 @@ class CoverageBump() extends FunSpec with Matchers {
       model.EmptyTemplate().render(model.Context.NotFound) should be("")
     }
     it("Options") {
-      sb.compile("Foo{{this}}").compileOptions.toString should be(
-        """Options:
-          |   Hash = Map(noEscape -> false, strict -> false, preventIndent -> false, explicitPartialContext -> false)
-          |   Context = None""".stripMargin)
-
       sb.compile("""{{#if "false"}}A{{else}}B{{/if}}""")(json) should be("B")
       sb.registerHelper("assignJS", """function(options){ return "Greetings "+ options.hash["bogus"]+"!"; }""")
         .compile("""Hello and {{assignJS tidal="wave"}}""")(json) should be("Hello and Greetings undefined!")

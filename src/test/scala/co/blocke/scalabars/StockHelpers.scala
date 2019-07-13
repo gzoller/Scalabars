@@ -274,5 +274,48 @@ class StockHelpers() extends FunSpec with Matchers {
                                            |World:second &gt;b&lt; => 2
                                            |""".stripMargin)
     }
+    it("helperMissing") {
+      val sb2 = sb.registerHelper(
+        "helperMissing",
+        """function(arr, options) {
+          |  return "nothing here";
+          |}
+        """.stripMargin
+      )
+      sb2.compile("This {{foo}}")(c) should be("This nothing here")
+    }
+    it("blockHelperMissing") {
+      val sb2 = sb.registerHelper(
+        "blockHelperMissing",
+        """function(arr, options) {
+          |  return "nothing here";
+          |}
+        """.stripMargin
+      )
+      sb2.compile("This {{#foo}}blah{{/foo}}")(c) should be("This nothing here")
+    }
+    it("log") {
+      val tHandler = new TestHandler()
+      val sbx = Scalabars(Some(JavaLogger(Some(tHandler))))
+      sbx.compile("""Hello {{log "why"}}!""")(c) should be("Hello !")
+      sbx.compile("""Hello {{log "why" name level="warn"}}!""")(c) should be("Hello !")
+      sbx.compile("""Hello {{log "why" name level="error"}}!""")(c) should be("Hello !")
+      sbx.compile("""Hello {{log "why" name level="info"}}!""")(c) should be("Hello !")
+      sbx.compile("""Hello {{log "why" name level="debug"}}!""")(c) should be("Hello !")
+
+      tHandler.buffer should be("""INFO: why
+                                  |WARNING: why Greg
+                                  |SEVERE: why Greg
+                                  |INFO: why Greg
+                                  |""".stripMargin)
+    }
   }
+}
+
+class TestHandler() extends java.util.logging.Handler {
+  private val strbuf = new StringBuilder()
+  def close(): Unit = {}
+  def flush(): Unit = {}
+  def publish(record: java.util.logging.LogRecord): Unit = { strbuf.append(record.getLevel() + ": " + record.getMessage() + "\n") }
+  def buffer: String = strbuf.toString
 }

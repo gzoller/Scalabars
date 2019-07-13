@@ -14,7 +14,7 @@ The advantage of writing helpers in pure Scala and not using any JavaScript help
   
 To install and use Scalabars include it in your projects by adding the following to your build.sbt:  
  ``` 
- libraryDependencies ++= Seq("co.blocke" %% "scalabars" % "0.1.0")  
+ libraryDependencies ++= Seq("co.blocke" %% "scalabars" % "0.1.1")  
  ```
 
 Use like this in your code:
